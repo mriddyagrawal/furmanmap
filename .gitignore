@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Transient Overpass fetch log (see scripts/fetch-osm.sh)
+data/.fetch.log
