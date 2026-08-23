@@ -39,7 +39,9 @@ def main():
     with open(SRC) as fh:
         elements = json.load(fh)["elements"]
 
-    nodes = {e["id"]: (e["lon"], e["lat"]) for e in elements if e["type"] == "node"}
+    # Standalone tagged nodes only — ways carry their own inline geometry now.
+    nodes = {e["id"]: (e["lon"], e["lat"])
+             for e in elements if e["type"] == "node" and "lat" in e}
     buildings, paths, entrances = [], [], []
 
     for e in elements:
@@ -55,8 +57,10 @@ def main():
 
         if e["type"] != "way":
             continue
+        # `out geom` gives coordinates inline; `nodes` stays the id list that
+        # makes shared-vertex junction detection exact.
         refs = e.get("nodes") or []
-        coords = [list(nodes[n]) for n in refs if n in nodes]
+        coords = [[g["lon"], g["lat"]] for g in (e.get("geometry") or []) if g]
         if len(coords) < 2:
             continue
 

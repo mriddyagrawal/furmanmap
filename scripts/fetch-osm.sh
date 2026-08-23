@@ -26,10 +26,15 @@ MIRRORS=(
   "https://overpass.private.coffee/api/interpreter"
 )
 
-# name|query — `>;` pulls the child nodes so ways have coordinates.
+# name|query
+#
+# `out geom;` inlines each way's coordinates AND keeps its `nodes` id array.
+# That is strictly better than `out body;>;out skel qt;`: no recursion, a far
+# cheaper query for the dispatcher to serve, a much smaller response, and no
+# separate skeleton copies of nodes to de-duplicate against tagged ones.
 PARTS=(
-  "buildings|(way[\"building\"]($BBOX);relation[\"building\"]($BBOX););out body;>;out skel qt;"
-  "highways|way[\"highway\"]($BBOX);out body;>;out skel qt;"
+  "buildings|(way[\"building\"]($BBOX);relation[\"building\"]($BBOX););out geom;"
+  "highways|way[\"highway\"]($BBOX);out geom;"
   "entrances|node[\"entrance\"]($BBOX);out body;"
 )
 
@@ -76,12 +81,9 @@ for part in "${PARTS[@]}"; do
   fetch_part "${part%%|*}" "${part#*|}" "$tmpdir/${part%%|*}.json"
 done
 
-# Merge, de-duplicating the child nodes the parts share.
-#
-# The dedupe MUST prefer the tagged copy. An entrance node arrives twice: once
-# tagged from the entrance query, and once as a bare skeleton child of a
-# building way via `>;`. Picking arbitrarily (unique_by) silently drops the
-# tags, and entrances vanish from the output with no error anywhere.
+# Merge. With `out geom` the parts no longer share skeleton node copies, but
+# keep the tagged-copy preference: it is free, and it is the guard that would
+# have caught entrances silently vanishing when the parts did overlap.
 jq -s '{elements: (map(.elements) | add
         | group_by((.type // "") + "/" + ((.id // 0)|tostring))
         | map(max_by(if has("tags") then 1 else 0 end)))}' \
