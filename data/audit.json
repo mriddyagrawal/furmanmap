@@ -1,55 +1,46 @@
 {
   "stats": {
-    "buildings": 516,
-    "buildings_named": 80,
+    "walkable_ways": 480,
+    "graph_nodes": 4152,
+    "graph_edges": 4486,
+    "network_km": 52.43,
+    "junctions": 639,
+    "dead_ends": 140,
+    "components": 8,
+    "largest_component_nodes": 4030,
+    "largest_component_pct": 97.1,
+    "orphan_islands": 7,
+    "orphan_nodes": 122,
+    "near_miss_gaps": 2,
+    "buildings": 82,
+    "buildings_named": 55,
+    "buildings_in_bbox": 516,
     "entrances": 12,
     "steps_ways": 4,
-    "walkable_ways": 1044,
-    "graph_nodes": 8558,
-    "graph_edges": 9034,
-    "network_km": 139.34,
-    "junctions": 1246,
-    "dead_ends": 500,
-    "components": 22,
-    "largest_component_nodes": 7513,
-    "largest_component_pct": 87.8,
-    "orphan_islands": 21,
-    "orphan_nodes": 1045,
-    "near_miss_gaps": 6,
     "phase1_buildings_still_unnamed": [
       "Plyler"
     ]
   },
+  "whole_bbox": {
+    "walkable_ways": 1046,
+    "graph_nodes": 8561,
+    "graph_edges": 9039,
+    "network_km": 139.4,
+    "junctions": 1247,
+    "dead_ends": 497,
+    "components": 21,
+    "largest_component_nodes": 7531,
+    "largest_component_pct": 88.0,
+    "orphan_islands": 20,
+    "orphan_nodes": 1030,
+    "near_miss_gaps": 4
+  },
   "gaps": [
-    {
-      "node": 3078472158,
-      "gap_m": 2.9,
-      "lat": 34.9268195,
-      "lon": -82.4339864
-    },
     {
       "node": 3085460757,
       "gap_m": 3.5,
       "lat": 34.9292289,
       "lon": -82.436557
-    },
-    {
-      "node": 11952020769,
-      "gap_m": 5.9,
-      "lat": 34.9129767,
-      "lon": -82.4290304
-    },
-    {
-      "node": 11952020772,
-      "gap_m": 5.9,
-      "lat": 34.9129338,
-      "lon": -82.4289926
-    },
-    {
-      "node": 3078472148,
-      "gap_m": 6.7,
-      "lat": 34.926339,
-      "lon": -82.4349748
     },
     {
       "node": 3085460786,

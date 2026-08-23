@@ -36,6 +36,9 @@ PARTS=(
   "buildings|(way[\"building\"]($BBOX);relation[\"building\"]($BBOX););out geom;"
   "highways|way[\"highway\"]($BBOX);out geom;"
   "entrances|node[\"entrance\"]($BBOX);out body;"
+  # Furman's campus outline is already mapped. Matched by tag+name rather than
+  # by a hardcoded id, so a re-draw upstream does not silently break the clip.
+  "boundary|relation[\"amenity\"=\"university\"][\"name\"=\"Furman University\"]($BBOX);out geom;"
 )
 
 # Only 2 concurrent slots per IP. Ask the server when one is free rather

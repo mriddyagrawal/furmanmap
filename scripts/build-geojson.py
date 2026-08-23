@@ -111,6 +111,29 @@ def main():
     # Standalone tagged nodes only — ways carry their own inline geometry now.
     nodes = {e["id"]: (e["lon"], e["lat"])
              for e in elements if e["type"] == "node" and "lat" in e}
+
+    # Campus outline, used to mark what is on campus. Features are never
+    # dropped by it — the app and the audit decide what to do with the flag.
+    boundary = None
+    for e in elements:
+        t = e.get("tags") or {}
+        if e["type"] == "relation" and t.get("amenity") == "university" \
+           and t.get("name") == "Furman University":
+            geom = polygon_from_relation(e)
+            if geom:
+                boundary = ([geom["coordinates"][0]] if geom["type"] == "Polygon"
+                            else [p[0] for p in geom["coordinates"]])
+                with open(os.path.join(ROOT, "data", "boundary.geojson"), "w") as fh:
+                    json.dump({"type": "FeatureCollection", "features": [{
+                        "type": "Feature", "properties": {"name": "Furman University"},
+                        "geometry": geom}]}, fh)
+    if boundary is None:
+        print("!! campus boundary not found — on_campus flags will all be true")
+
+    def on_campus(pts):
+        if boundary is None:
+            return True
+        return any(any(contains(r, pt) for r in boundary) for pt in pts)
     buildings, paths, entrances = [], [], []
 
     for e in elements:
@@ -120,9 +143,13 @@ def main():
             entrances.append({
                 "type": "Feature",
                 "id": "n%d" % e["id"],
-                "properties": keep_tags(tags),
+                "properties": dict(keep_tags(tags),
+                                   on_campus=on_campus([nodes[e["id"]]])),
                 "geometry": {"type": "Point", "coordinates": list(nodes[e["id"]])},
             })
+
+        if e["type"] == "relation" and tags.get("amenity") == "university":
+            continue
 
         if e["type"] == "relation" and tags.get("building"):
             geom = polygon_from_relation(e)
@@ -130,7 +157,10 @@ def main():
                 buildings.append({
                     "type": "Feature",
                     "id": "r%d" % e["id"],
-                    "properties": keep_tags(tags),
+                    "properties": dict(keep_tags(tags),
+                                       on_campus=on_campus(geom["coordinates"][0]
+                                                           if geom["type"] == "Polygon"
+                                                           else geom["coordinates"][0][0])),
                     "geometry": geom,
                 })
             continue
@@ -151,7 +181,7 @@ def main():
             buildings.append({
                 "type": "Feature",
                 "id": "w%d" % e["id"],
-                "properties": keep_tags(tags),
+                "properties": dict(keep_tags(tags), on_campus=on_campus(ring)),
                 "geometry": {"type": "Polygon", "coordinates": [ring]},
             })
         elif "highway" in tags:
@@ -160,6 +190,7 @@ def main():
                 "id": "w%d" % e["id"],
                 "properties": dict(keep_tags(tags),
                                    walkable=tags["highway"] in WALKABLE,
+                                   on_campus=on_campus(coords),
                                    nodes=refs),
                 "geometry": {"type": "LineString", "coordinates": coords},
             })
