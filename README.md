@@ -1,2 +1,2 @@
-# furmanmap
-At attempt at mapping Furman University for Students, Parents and friends of Furman.
+# Mapping Furman
+An attempt at mapping Furman University for students, parents, and friends of Furman.
