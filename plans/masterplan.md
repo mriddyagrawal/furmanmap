@@ -194,14 +194,62 @@ cannot yet offer a step-free mode.
 
 ## Phase 4 — Indoor pilot
 
+**Decision: indoor stays in OpenStreetMap. No second system, no vendor, no separate
+database.** Indoor data uses OSM's Simple Indoor Tagging schema, is edited with the
+same accounts and etiquette as everything else, and comes out through the *same*
+extraction pipeline — just additionally filtered by `level`. This keeps ground rule 1
+intact all the way to room level.
+
+### The data model
+
+Every indoor feature carries a `level=*` (0, 1, 2 …). On top of that: rooms are
+`indoor=room`, hallways `indoor=corridor`, doors `door=*`, and stairs and elevators
+are tagged so they span the levels they connect — which is what lets a route move
+between floors. Room numbers and names ride along as ordinary tags, and that is
+precisely what makes **"Plyler 126"** searchable later.
+
+> Transcribed from a planning conversation whose tag list was partly obscured.
+> **Verify the exact keys against the [Simple Indoor Tagging wiki](https://wiki.openstreetmap.org/wiki/Simple_Indoor_Tagging)
+> before briefing the club** — getting the schema wrong at the start means re-surveying
+> buildings, which is the one cost here that is genuinely expensive to undo.
+
+### Club workflow
+
+| Step | Tool |
+|---|---|
+| Map | **JOSM with the indoorhelper plugin** — iD is fine for simple cases |
+| Verify | **[indoorequal.com](https://indoorequal.com)** renders live OSM indoor data with a floor picker, so mappers see their own work immediately |
+| Extract | the existing pipeline, filtered by `level` — no new tooling |
+
+### Steps
+
 | # | Step |
 |---|---|
-| 4.1 | Request floor plans from Facilities — this is the real conversation-starter with the university |
+| 4.1 | Ask Facilities for floor plans — and see the copyright caveat below; this ask is also the real conversation-starter with the university |
 | 4.2 | Simple Indoor Tagging for Duke Library, Trone, Townes |
-| 4.3 | Level picker (indoorequal-style) |
-| 4.4 | Indoor↔outdoor route stitching through entrance nodes |
+| 4.3 | Level picker in the app (indoorequal-style) |
+| 4.4 | Make the routing graph level-aware: stair and elevator edges connecting levels |
+| 4.5 | Indoor↔outdoor route stitching through entrance nodes |
 
-**Testing:** route from a room in Duke Library to a room in Trone and confirm the path exits through a real door, crosses outdoors, and re-enters through a real door. Validate 20 room labels against the actual doors. Expect indoor geolocation to be poor — do not promise a blue dot indoors.
+### Two caveats, both manageable
+
+**Copyright.** Furman's official floor-plan PDFs **cannot be traced into OSM without
+permission.** Either get Facilities' explicit blessing, or survey by walking the
+buildings with sketches and a laser measure — which is how most indoor OSM is actually
+made and is entirely legitimate. This is the same rule as never importing from Google
+Maps, and violating it can get the whole club's edits reverted.
+
+**The graph becomes level-aware.** Indoor routing means nodes carry a level, and stairs
+and elevators become the edges between them. That is already scoped as 4.3–4.4 — new
+work, but not a new architecture.
+
+### Testing
+
+Route from a room in Duke Library to a room in Trone and confirm the path exits through
+a real door, crosses outdoors, and re-enters through a real door. Validate 20 room
+labels against the actual doors. Assert that a step-free indoor route uses an elevator
+edge and never a stair edge. Expect indoor geolocation to be poor — **do not promise a
+blue dot indoors**; that is what vendors sell beacon hardware for.
 
 ---
 
