@@ -1,7 +1,7 @@
 {
   "stats": {
-    "buildings": 510,
-    "buildings_named": 75,
+    "buildings": 516,
+    "buildings_named": 80,
     "entrances": 12,
     "steps_ways": 4,
     "walkable_ways": 1044,
@@ -17,10 +17,6 @@
     "orphan_nodes": 1045,
     "near_miss_gaps": 6,
     "phase1_buildings_still_unnamed": [
-      "Trone",
-      "Daniel Dining",
-      "Timmons",
-      "Hartness",
       "Plyler"
     ]
   },

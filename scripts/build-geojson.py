@@ -33,6 +33,75 @@ def keep_tags(tags):
     return {k: v for k, v in tags.items() if k in KEEP}
 
 
+def rings_from_members(members, role):
+    """Stitch a multipolygon relation's member ways into closed rings.
+
+    A relation's outline is often split across several ways that only join end
+    to end, in arbitrary order and direction — so they have to be chained, not
+    concatenated. Buildings mapped this way (a courtyard, a complex sharing an
+    outline) are invisible to any query that looks only at ways, which is how
+    Trone, Daniel Dining, Timmons, Hartness and Plyler were all reported as
+    "missing from OSM" when they were mapped the whole time.
+    """
+    segs = [[[g["lon"], g["lat"]] for g in (m.get("geometry") or [])]
+            for m in members
+            if m.get("type") == "way" and m.get("role") == role]
+    segs = [s for s in segs if len(s) >= 2]
+    rings = []
+    while segs:
+        ring = segs.pop(0)
+        joined = True
+        while ring[0] != ring[-1] and joined:
+            joined = False
+            for i, seg in enumerate(segs):
+                if seg[0] == ring[-1]:
+                    ring += seg[1:]
+                elif seg[-1] == ring[-1]:
+                    ring += seg[-2::-1]
+                elif seg[-1] == ring[0]:
+                    ring = seg[:-1] + ring
+                elif seg[0] == ring[0]:
+                    ring = seg[:0:-1] + ring
+                else:
+                    continue
+                segs.pop(i)
+                joined = True
+                break
+        if ring[0] != ring[-1]:
+            ring.append(ring[0])          # unclosed in OSM; close it rather than drop it
+        if len(ring) >= 4:
+            rings.append(ring)
+    return rings
+
+
+def contains(ring, pt):
+    """Ray-cast point-in-ring, to attach each hole to the right outer ring."""
+    x, y = pt
+    inside = False
+    for i in range(len(ring) - 1):
+        x1, y1 = ring[i]
+        x2, y2 = ring[i + 1]
+        if (y1 > y) != (y2 > y) and x < x1 + (y - y1) / (y2 - y1) * (x2 - x1):
+            inside = not inside
+    return inside
+
+
+def polygon_from_relation(rel):
+    outers = rings_from_members(rel.get("members") or [], "outer")
+    inners = rings_from_members(rel.get("members") or [], "inner")
+    if not outers:
+        return None
+    parts = [[o] for o in outers]
+    for hole in inners:
+        for part in parts:
+            if contains(part[0], hole[0]):
+                part.append(hole)
+                break
+    if len(parts) == 1:
+        return {"type": "Polygon", "coordinates": parts[0]}
+    return {"type": "MultiPolygon", "coordinates": parts}
+
+
 def main():
     if not os.path.exists(SRC):
         sys.exit("missing %s — run scripts/fetch-osm.sh first" % SRC)
@@ -54,6 +123,17 @@ def main():
                 "properties": keep_tags(tags),
                 "geometry": {"type": "Point", "coordinates": list(nodes[e["id"]])},
             })
+
+        if e["type"] == "relation" and tags.get("building"):
+            geom = polygon_from_relation(e)
+            if geom:
+                buildings.append({
+                    "type": "Feature",
+                    "id": "r%d" % e["id"],
+                    "properties": keep_tags(tags),
+                    "geometry": geom,
+                })
+            continue
 
         if e["type"] != "way":
             continue
