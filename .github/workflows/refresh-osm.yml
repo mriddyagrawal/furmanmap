@@ -1,0 +1,68 @@
+name: Refresh OSM data
+
+# Weekly pull of whatever the GIS club has mapped since last time, plus a
+# manual "Run workflow" button. The guardrail below is the point: OSM is a
+# live wiki anyone can edit, so a refresh that suddenly loses most of the
+# campus is a vandalism/outage signal, not new data — it fails instead of
+# committing.
+on:
+  schedule:
+    - cron: "0 9 * * 1"        # Mondays 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Keep the previous audit for comparison
+        run: cp data/audit.json /tmp/audit.prev.json 2>/dev/null || echo '{}' > /tmp/audit.prev.json
+
+      - name: Pull from Overpass
+        run: ./scripts/fetch-osm.sh
+
+      - name: Rebuild GeoJSON
+        run: python3 scripts/build-geojson.py
+
+      - name: Audit
+        run: python3 scripts/audit.py
+
+      - name: Guardrail — refuse a refresh that loses the campus
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          prev = json.load(open('/tmp/audit.prev.json')).get('stats', {})
+          new  = json.load(open('data/audit.json'))['stats']
+          if not prev:
+              print('no baseline yet — accepting'); sys.exit(0)
+          bad = []
+          for key, floor in (('buildings', 0.8), ('walkable_ways', 0.8),
+                             ('largest_component_nodes', 0.8)):
+              if prev.get(key) and new[key] < prev[key] * floor:
+                  bad.append('%s: %s -> %s' % (key, prev[key], new[key]))
+          # Named buildings and entrances should only ever go up, materially.
+          for key in ('buildings_named', 'entrances', 'steps_ways'):
+              if prev.get(key) and new[key] < prev[key] * 0.7:
+                  bad.append('%s: %s -> %s' % (key, prev[key], new[key]))
+          if bad:
+              print('REFUSING refresh — data dropped sharply:')
+              print('\n'.join('  ' + b for b in bad))
+              sys.exit(1)
+          print('guardrail ok')
+          PY
+
+      - name: Commit if anything changed
+        run: |
+          git config user.name  "osm-refresh[bot]"
+          git config user.email "actions@github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "no OSM changes since last run"
+          else
+            git commit -m "data: refresh OSM extract $(date -u +%Y-%m-%d)"
+            git push
+          fi
