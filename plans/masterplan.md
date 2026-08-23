@@ -4,8 +4,8 @@ _Written 2026-08-23. Living document: update the Status column as phases close._
 
 | Phase | What it is | Status |
 |---|---|---|
-| **0** | Data pipeline — extract, convert, audit, auto-refresh | In progress |
-| **1** | Data sprint — fix OSM so routing can work | Not started (blocked on 0's audit) |
+| **0** | Data pipeline — extract, convert, audit, auto-refresh | **Complete** |
+| **1** | Data sprint — fix OSM so routing can work | In progress — connectivity criteria already met; entrances + stairs remain |
 | **2** | v0 outdoor wayfinder — the app | Not started |
 | **3** | Adoption — get freshmen actually using it | Not started |
 | **4** | Indoor pilot — 2–3 buildings | Not started |
@@ -21,6 +21,21 @@ _Written 2026-08-23. Living document: update the Status column as phases close._
 4. **Mridul builds the app; the GIS club feeds OSM.** The club never edits this repo. Their work arrives through OSM and the refresh job. This is what makes a one-person team survivable.
 5. **Scope discipline:** outdoor walking only in v0. No parking, no transit, no indoor, no accounts, no user-generated content. Each of those is a later phase or a deliberate never.
 6. **Accessibility is a feature, not a checkbox.** The "avoid stairs" route is a first-class mode from day one of Phase 2, because it's the thing a purchased vendor product would charge for and the thing that most justifies the project existing.
+
+## Two data paths (a recurring confusion — worth stating plainly)
+
+The map draws from two independent sources, and only one of them involves a
+tile server:
+
+1. **The world basemap** — streamed from **OpenFreeMap's** tile servers straight
+   to MapLibre in the browser. We absolutely depend on this; it is what makes
+   zooming out to the whole world work. We just don't *run* it.
+2. **Our campus overlay** — `data/*.geojson`, a static file served from GitHub
+   Pages and handed to MapLibre as a source. No tiling, no server logic, no API.
+
+So: **we need OpenFreeMap; we do not need a tiling engine of our own.** Tiling our
+own data would only become relevant if the campus overlay grew far beyond its
+current ~0.8 MB, which is not on any horizon.
 
 ## What "done" means for v0
 
@@ -48,7 +63,8 @@ If that works reliably, v0 is done — regardless of how much else is unbuilt.
 | 0.2 | Convert to app-ready GeoJSON, preserving OSM node IDs on paths | `scripts/build-geojson.py` → `data/{buildings,paths,entrances}.geojson` | Written, unrun |
 | 0.3 | Connectivity + completeness audit | `scripts/audit.py` → `data/audit.md`, `data/audit.json` | Written, unrun |
 | 0.4 | Scheduled refresh with anti-vandalism guardrail | `.github/workflows/refresh-osm.yml` | Written, untested in CI |
-| 0.5 | Turn the audit's gap list into the Phase 1 punch list | `plans/phase1-punchlist.md` | Blocked on 0.1–0.3 |
+| 0.5 | Clip to Furman's OSM campus boundary; flag features `on_campus` | `data/boundary.geojson` | Done — boundary already existed as an OSM relation |
+| 0.6 | Turn the audit's gap list into the Phase 1 punch list | `data/audit.md` | Done — audit.md *is* the punch list |
 
 **Why node IDs matter:** two paths are connected when they *share an OSM node ID*, not when their coordinates happen to be close. Preserving the IDs makes the graph exact and makes "these two sidewalks look joined but aren't" a detectable bug rather than an invisible one.
 
@@ -73,8 +89,10 @@ If that works reliably, v0 is done — regardless of how much else is unbuilt.
 
 | # | Step | Owner | Notes |
 |---|---|---|---|
-| 1.1 | Name the missing buildings | Mridul, ~1 evening in iD | Trone Student Center, Daniel Dining Hall, Timmons Arena, Hartness Pavilion, PAC, Plyler Hall (its own name inside the Townes complex) |
-| 1.2 | Close near-miss gaps from `audit.md` | Mridul, iD, desk work | Highest leverage: one shared node can reconnect a whole island |
+| 1.1 | ~~Name the missing buildings~~ | — | **Dissolved.** Trone, Daniel Dining, Timmons, Hartness and Plyler were mapped and named all along, as multipolygon *relations*. The survey's Overpass query counted only ways, so they were invisible to it. |
+| 1.1b | Fix the Plyler Hall spelling | Mridul, 2 min in iD | OSM has "John L **Pyler** Hall". The only genuine naming defect found. |
+| 1.2 | Close near-miss gaps from `audit.md` | Mridul, iD, desk work | **2 remaining on campus** (was 6). Two near McAlister already fixed 2026-08-23 and confirmed via re-pull. |
+| 1.2b | Tag building categories | Mridul, desk work | Only 16 campus buildings carry `building=university` and 20 carry any `amenity`. Without this there is no "show me academic buildings" filter. |
 | 1.3 | Entrance nodes on the top ~30 buildings | GIS club, on foot | `entrance=main` / `entrance=yes`; this is what turns "walk to the middle of the building" into "walk to the door" |
 | 1.4 | Map staircases | GIS club, on foot | `highway=steps`, plus `handrail`, `step_count`, `incline` where obvious. **The accessible-route mode does not exist until this is done.** |
 | 1.5 | Add aliases | Mridul | `short_name=DH`, `alt_name`, building codes (RLY, TSC, FUR) so search matches what students actually type |
@@ -92,11 +110,22 @@ If that works reliably, v0 is done — regardless of how much else is unbuilt.
 
 Phase 1 is tested by **re-running `scripts/audit.py` and watching the numbers move.** That's the whole point of building it first. Specifically, the sprint is done when:
 
-- `largest_component_pct` ≥ 97% — i.e. essentially the whole walkable network is one blob
-- `near_miss_gaps` ≤ 3, and each survivor is explainable (a genuinely separate path across a road, not a mapping error)
-- `entrances` ≥ 30
-- `steps_ways` ≥ 15 — enough that "avoid stairs" produces visibly different routes
-- `phase1_buildings_still_unnamed` is empty
+All measured **on campus** (`on_campus` scope), not over the query bbox — the
+bbox figure is dominated by off-campus fringe and means nothing here.
+
+| Criterion | Target | Measured 2026-08-23 | |
+|---|---|---|---|
+| `largest_component_pct` | ≥ 97% | **97.1%** | met |
+| `near_miss_gaps` | ≤ 3 | **2** | met |
+| `phase1_buildings_still_unnamed` | empty | 1 (Plyler typo) | trivial |
+| `entrances` | ≥ 30 | **12** | field work |
+| `steps_ways` | ≥ 15 | **4** | field work |
+
+The path network is in better shape than the survey suggested. What is missing is
+exactly the data that only exists if someone walks campus — entrances and stairs.
+That is the entire remaining case for the GIS club, and it is also why **Phase 2
+is not blocked**: routing works today, it just ends at building centroids and
+cannot yet offer a step-free mode.
 - **Ground truth spot-check:** pick 10 random buildings, stand in front of each, confirm the name and entrance in OSM match reality. Data that's self-consistent but wrong passes every automated check.
 
 ---
