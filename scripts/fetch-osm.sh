@@ -1,10 +1,24 @@
 #!/usr/bin/env bash
 # Pull the Furman campus extract from OpenStreetMap via Overpass.
-# Writes data/campus.osm.json. Tries mirrors in order; Overpass instances go busy often.
+# Writes data/campus.osm.json.
+#
+# Fetched in three small pieces rather than one big query, on purpose. The
+# campus is tiny (~510 buildings, ~1100 highway ways) and each piece answers
+# in seconds — the thing that actually fails is Overpass's dispatcher going
+# busy for a window. A small request that fails fast and retries slips
+# through those windows; one big request with a long timeout just hangs
+# through them. Each piece retries independently and mirrors are rotated.
 set -euo pipefail
 
 BBOX="${BBOX:-34.912,-82.457,34.938,-82.421}"   # S,W,N,E — campus + fringe
-OUT="$(cd "$(dirname "$0")/.." && pwd)/data/campus.osm.json"
+ROUNDS="${ROUNDS:-6}"
+PER_TRY_TIMEOUT="${PER_TRY_TIMEOUT:-90}"
+DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
+OUT="$DIR/campus.osm.json"
+
+# OSM infrastructure filters bare-curl/python User-Agents. Identify the app
+# and give a contact route — the repo URL, not a personal email.
+UA="FurmanWayfinder/0.1 (agramr2@furman.edu; +https://github.com/mriddyagrawal/furmanmap)"
 
 MIRRORS=(
   "https://overpass-api.de/api/interpreter"
@@ -12,37 +26,65 @@ MIRRORS=(
   "https://overpass.private.coffee/api/interpreter"
 )
 
-read -r -d '' QUERY <<QEOF || true
-[out:json][timeout:180];
-(
-  way["building"]($BBOX);
-  relation["building"]($BBOX);
-  way["highway"]($BBOX);
-  node["entrance"]($BBOX);
-);
-out body;
->;
-out skel qt;
-QEOF
+# name|query — `>;` pulls the child nodes so ways have coordinates.
+PARTS=(
+  "buildings|(way[\"building\"]($BBOX);relation[\"building\"]($BBOX););out body;>;out skel qt;"
+  "highways|way[\"highway\"]($BBOX);out body;>;out skel qt;"
+  "entrances|node[\"entrance\"]($BBOX);out body;"
+)
 
-ATTEMPTS="${ATTEMPTS:-3}"
+# Only 2 concurrent slots per IP. Ask the server when one is free rather
+# than retrying blind.
+wait_for_slot () {
+  local st; st="$(curl -sS -m 15 -A "$UA" "${1%/interpreter}/status" 2>/dev/null || true)"
+  local free; free="$(sed -n 's/.*\([0-9]\+\) slots available now.*/\1/p' <<< "$st" | head -1)"
+  [ -n "$free" ] && echo "    (server reports $free slot(s) free)"
+  return 0   # never non-zero: this is advisory, and `set -e` would abort the retry loop
+}
 
-for attempt in $(seq 1 "$ATTEMPTS"); do
-  for url in "${MIRRORS[@]}"; do
-    echo "→ attempt $attempt: $url"
-    tmp="$(mktemp)"
-    if curl -sS -m 300 -G "$url" --data-urlencode "data=$QUERY" -o "$tmp" \
-       && head -c 200 "$tmp" | grep -q '"elements"'; then
-      mv "$tmp" "$OUT"
-      echo "✓ wrote $OUT ($(wc -c < "$OUT" | tr -d ' ') bytes, $(jq '.elements|length' "$OUT") elements)"
-      exit 0
+fetch_part () {
+  local name="$1" body="$2" dest="$3"
+  local n_mirrors=${#MIRRORS[@]}
+  for round in $(seq 1 "$ROUNDS"); do
+    local url="${MIRRORS[$(( (round - 1) % n_mirrors ))]}"
+    local tmp code; tmp="$(mktemp)"
+    # POST, not a long GET: large queries in a URL are truncated or rejected.
+    code="$(curl -sS -m "$PER_TRY_TIMEOUT" -X POST "$url" -A "$UA" \
+              --data-urlencode "data=[out:json][timeout:180];$body" \
+              -o "$tmp" -w '%{http_code}' 2>/dev/null || echo 000)"
+    if [ "$code" = "200" ] && jq -e '.elements' "$tmp" >/dev/null 2>&1; then
+      mv "$tmp" "$dest"
+      echo "  ✓ $name: $(jq '.elements|length' "$dest") elements  (round $round, ${url#https://})"
+      return 0
     fi
-    reason="$(grep -o 'Error[^<]*' "$tmp" 2>/dev/null | head -1 || true)"
-    echo "  …unavailable ${reason:-(timeout/no data)}"
+    # Overpass failures are verbose — surface the reason instead of guessing.
+    local why; why="$(grep -o 'Error[^<]*' "$tmp" 2>/dev/null | head -1 | cut -c1-110)"
+    echo "  · $name: round $round http=$code ${why:-no message} (${url#https://})"
     rm -f "$tmp"
-    sleep $(( attempt * 5 ))
+    wait_for_slot "$url"
+    sleep $(( round < 4 ? round * 4 : 15 ))
   done
+  echo "  ✗ $name: giving up after $ROUNDS rounds" >&2
+  return 1
+}
+
+echo "Fetching campus extract (bbox $BBOX)"
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+for part in "${PARTS[@]}"; do
+  fetch_part "${part%%|*}" "${part#*|}" "$tmpdir/${part%%|*}.json"
 done
 
-echo "✗ all Overpass mirrors failed" >&2
-exit 1
+# Merge, de-duplicating the child nodes the parts share.
+#
+# The dedupe MUST prefer the tagged copy. An entrance node arrives twice: once
+# tagged from the entrance query, and once as a bare skeleton child of a
+# building way via `>;`. Picking arbitrarily (unique_by) silently drops the
+# tags, and entrances vanish from the output with no error anywhere.
+jq -s '{elements: (map(.elements) | add
+        | group_by((.type // "") + "/" + ((.id // 0)|tostring))
+        | map(max_by(if has("tags") then 1 else 0 end)))}' \
+   "$tmpdir"/*.json > "$OUT"
+
+echo "✓ wrote $OUT ($(jq '.elements|length' "$OUT") elements, $(( $(wc -c < "$OUT") / 1024 )) KB)"
