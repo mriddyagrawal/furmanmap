@@ -1,0 +1,65 @@
+{
+  "stats": {
+    "buildings": 510,
+    "buildings_named": 75,
+    "entrances": 11,
+    "steps_ways": 4,
+    "walkable_ways": 1044,
+    "graph_nodes": 8558,
+    "graph_edges": 9034,
+    "network_km": 139.34,
+    "junctions": 1246,
+    "dead_ends": 500,
+    "components": 22,
+    "largest_component_nodes": 7513,
+    "largest_component_pct": 87.8,
+    "orphan_islands": 21,
+    "orphan_nodes": 1045,
+    "near_miss_gaps": 6,
+    "phase1_buildings_still_unnamed": [
+      "Trone",
+      "Daniel Dining",
+      "Timmons",
+      "Hartness",
+      "Plyler"
+    ]
+  },
+  "gaps": [
+    {
+      "node": 3078472158,
+      "gap_m": 2.9,
+      "lat": 34.9268195,
+      "lon": -82.4339864
+    },
+    {
+      "node": 3085460757,
+      "gap_m": 3.5,
+      "lat": 34.9292289,
+      "lon": -82.436557
+    },
+    {
+      "node": 11952020769,
+      "gap_m": 5.9,
+      "lat": 34.9129767,
+      "lon": -82.4290304
+    },
+    {
+      "node": 11952020772,
+      "gap_m": 5.9,
+      "lat": 34.9129338,
+      "lon": -82.4289926
+    },
+    {
+      "node": 3078472148,
+      "gap_m": 6.7,
+      "lat": 34.926339,
+      "lon": -82.4349748
+    },
+    {
+      "node": 3085460786,
+      "gap_m": 7.8,
+      "lat": 34.9288182,
+      "lon": -82.4374784
+    }
+  ]
+}
