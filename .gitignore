@@ -219,3 +219,6 @@ __marimo__/
 
 # Transient Overpass fetch log (see scripts/fetch-osm.sh)
 data/.fetch.log
+
+# macOS
+.DS_Store
