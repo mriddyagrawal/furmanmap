@@ -50,8 +50,24 @@ Violating any of these breaks the design, not just the code:
 - Generated data in `data/` **is committed** — that snapshot is what the site serves.
 - Keep the app small and readable. This gets handed to a student club eventually;
   cleverness that needs explaining is a liability.
-- Commit messages: `area: imperative summary`. Areas in use: `docs`, `scripts`, `ci`,
-  `plans`, `data`, `app`, `chore`.
+
+## Git workflow (not optional)
+
+**Atomic commits.** One logical change per commit — never a grab-bag. If the summary
+line needs an "and", it is two commits. Message format is `area: imperative summary`
+(areas: `docs`, `scripts`, `ci`, `plans`, `data`, `app`, `chore`), followed by a body
+explaining *why* the change is shaped this way. The diff already says what changed;
+the body is for the reasoning that would otherwise be lost.
+
+**Branch for anything even slightly major.** Direct commits to `main` are reserved for
+genuinely trivial edits — a typo, a comment, a link fix. Everything else gets a branch
+and a PR: a new script, a behaviour change, a dependency, a data-pipeline change, an app
+feature, a plan revision. When in doubt, branch; the cost is one command and the benefit
+is a reviewable, revertable unit.
+
+Branch names: `phase0/…`, `feat/…`, `fix/…`, `data/…`, `docs/…`.
+
+Never force-push `main`. Never rewrite history that has been pushed.
 
 ## Gotchas that will cost you time
 
