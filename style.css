@@ -16,6 +16,9 @@
   --warn:        #a3341a;
   --shadow:      rgba(0, 0, 0, .18);
   --dot:         #1da1f2;   /* matches MapLibre's own user-location dot */
+  --muted:       #8b8b93;   /* deliberately neutral: the whole palette is
+                               purple-tinted, and an inactive control tinted
+                               purple reads as a broken active one */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,6 +36,7 @@
     --warn:        #ff9f7a;
     --shadow:      rgba(0, 0, 0, .5);
     --dot:         #4cb8ff;
+    --muted:       #86868f;
   }
 }
 
@@ -78,11 +82,12 @@ button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
   display: flex; align-items: center; gap: 5px;
   font-size: 15px; line-height: 1; padding: 10px 10px;
 }
-#compass-label { font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+#compass-label { font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
+#compass.live #compass-label { color: var(--dot); }
 /* A real SVG rather than a rotated text glyph: a character's shape, baseline
  * and rest orientation vary by font, which is why the arrow looked wrong and
  * needed a 90-degree correction. This points north at rest, everywhere. */
-#compass-arrow { display: block; fill: var(--ink-soft); transform: rotate(0deg); }
+#compass-arrow { display: block; fill: var(--muted); transform: rotate(0deg); }
 #compass.live #compass-arrow { fill: var(--dot); }
 
 /* Cone on the blue dot showing which way you are facing.

@@ -8,7 +8,7 @@
 // Bumped whenever something user-visible changes. GitHub Pages caches for ten
 // minutes, so "it is not there" and "you are looking at an old copy" are easy
 // to confuse — this makes the running version checkable at a glance.
-const BUILD = '2026-08-24 · arrow-svg';
+const BUILD = '2026-08-24 · compass-state';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -79,6 +79,7 @@ async function main() {
     // trackUserLocation fires this on every GPS update, not just when asked.
     // Only adopt it as the route origin if the user actually requested that,
     // or a position tick a second later silently overwrites a chosen A -> B.
+    updateHeadingMarker();       // the cone rides the dot, in every mode
     if (state.navigating) return navUpdate(state.here, pos.coords.heading);
     if (!state.followMe) return;
     state.from = { name: 'My location', point: state.here };
@@ -317,19 +318,33 @@ function wireSearch(named) {
  */
 function startCompass() {
   if (state.compassOn) return;
-  state.compassAsked = true;
   const listen = () => {
     state.compassOn = true;
+    state.compassState = 'waiting…';
     window.addEventListener('deviceorientationabsolute', onOrientation, true);
     window.addEventListener('deviceorientation', onOrientation, true);
+    // If nothing arrives, say so. A silent sensor and a broken control look
+    // identical, and the difference decides whether to keep tapping.
+    setTimeout(() => {
+      if (state.heading == null) {
+        state.compassState = 'no compass';
+        updateCompassUI();
+      }
+    }, 4000);
+    updateCompassUI();
   };
-  // iOS 13+ gates the sensor behind an explicit prompt from a user gesture.
   const DOE = window.DeviceOrientationEvent;
-  if (DOE && typeof DOE.requestPermission === 'function') {
+  if (!DOE) { state.compassState = 'no compass'; return updateCompassUI(); }
+  // iOS 13+ gates the sensor behind an explicit prompt from a user gesture.
+  if (typeof DOE.requestPermission === 'function') {
     DOE.requestPermission()
-      .then(r => { if (r === 'granted') listen(); })
-      .catch(() => {});
-  } else if (DOE) {
+      .then(r => {
+        if (r === 'granted') return listen();
+        state.compassState = 'denied';
+        updateCompassUI();
+      })
+      .catch(() => { state.compassState = 'tap again'; updateCompassUI(); });
+  } else {
     listen();
   }
 }
@@ -377,9 +392,8 @@ function startCameraLoop() {
         padding: { top: Math.round(window.innerHeight * 0.45), bottom: 0, left: 0, right: 0 }
       });
       if (metres(state.mapCenter, state.here) > 0.5) busy = true;
-    } else if (state.heading != null) {
-      updateHeadingMarker();
     }
+    updateHeadingMarker();
     updateCompassUI();
     if (busy) startCameraLoop();
   };
@@ -394,7 +408,11 @@ const angleGap = (a, b) => {
 /* A cone on the blue dot showing which way you face, and an arrow in the panel
    that works whether or not the map is rotated. */
 function updateHeadingMarker() {
-  if (state.heading == null || !state.here) return;
+  if (!state.here) return;
+  if (state.heading == null) {          // no compass: nothing to point
+    if (state.headingMarker) { state.headingMarker.remove(); state.headingMarker = null; }
+    return;
+  }
   if (!state.headingMarker) {
     const el = document.createElement('div');
     el.className = 'heading-cone';
@@ -412,7 +430,8 @@ function updateCompassUI() {
   const arrow = $('compass-arrow');
   if (!arrow) return;
   if (state.heading == null) {
-    $('compass-label').textContent = 'compass';
+    $('compass').classList.remove('live');
+    $('compass-label').textContent = state.compassState || 'compass';
     return;
   }
   $('compass').classList.add('live');
@@ -512,11 +531,10 @@ function wireControls() {
   // Android can start listening immediately; iOS needs the tap below.
   const DOE = window.DeviceOrientationEvent;
   if (DOE && typeof DOE.requestPermission !== 'function') startCompass();
-  $('compass').onclick = () => {
-    if (state.compassOn) return;
-    startCompass();
-    hint('Compass enabled.');
-  };
+  else if (DOE) { state.compassState = 'tap for compass'; }
+  else { state.compassState = 'no compass'; }
+  updateCompassUI();
+  $('compass').onclick = () => startCompass();
 
   $('start').onclick = startWalking;
   $('stop').onclick = stopWalking;
