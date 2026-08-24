@@ -199,6 +199,52 @@ def main():
             w("| %.1f m | [%.5f, %.5f](https://www.openstreetmap.org/#map=20/%.5f/%.5f) |"
               % (g["gap_m"], g["lat"], g["lon"], g["lat"], g["lon"]))
 
+    # --- tagging punch list ----------------------------------------------
+    # Two separate jobs, both desk work: buildings with no name at all, and
+    # named buildings whose only category is `building=yes` (which says a
+    # building exists and nothing else — no category filter can be built on it).
+    GENERIC = {"yes", "roof", "", None}
+    unnamed, uncategorised = [], []
+    for f in on_campus_b:
+        pr = f["properties"]
+        osm = "https://www.openstreetmap.org/%s/%s" % (
+            "relation" if f["id"].startswith("r") else "way", f["id"][1:])
+        g = f["geometry"]
+        ring = g["coordinates"][0] if g["type"] == "Polygon" else g["coordinates"][0][0]
+        lon = sum(c[0] for c in ring) / len(ring)
+        lat = sum(c[1] for c in ring) / len(ring)
+        row = {"name": pr.get("name"), "building": pr.get("building"),
+               "osm": osm, "lat": lat, "lon": lon}
+        if not pr.get("name"):
+            unnamed.append(row)
+        elif pr.get("building") in GENERIC and not pr.get("amenity"):
+            uncategorised.append(row)
+
+    if uncategorised:
+        w("\n## Named, but no category (%d)\n" % len(uncategorised))
+        w("`building=yes` says a building exists and nothing more. Give each a real"
+          " value (`university`, `dormitory`, `sports_centre`, `chapel`, `office`…)"
+          " or an `amenity`, or no category filter can ever exist.\n")
+        w("| Building | Now | Edit |")
+        w("|---|---|---|")
+        for r in sorted(uncategorised, key=lambda r: r["name"]):
+            w("| %s | `building=%s` | [open](%s) |" % (r["name"], r["building"], r["osm"]))
+
+    if unnamed:
+        w("\n## On campus, no name (%d)\n" % len(unnamed))
+        w("Unsearchable and unroutable-to until named.\n")
+        w("| Now | Where | Edit |")
+        w("|---|---|---|")
+        for r in sorted(unnamed, key=lambda r: (r["lat"], r["lon"])):
+            w("| `building=%s` | [%.5f, %.5f](https://www.openstreetmap.org/#map=19/%.5f/%.5f) | [open](%s) |"
+              % (r["building"], r["lat"], r["lon"], r["lat"], r["lon"], r["osm"]))
+        stats["buildings_unnamed"] = len(unnamed)
+        stats["buildings_uncategorised"] = len(uncategorised)
+        with open(D("audit.json"), "w") as fh:
+            json.dump({"stats": stats, "whole_bbox": whole, "gaps": near[:60],
+                       "unnamed": unnamed, "uncategorised": uncategorised},
+                      fh, indent=2)
+
     with open(D("audit.md"), "w") as fh:
         fh.write("\n".join(L) + "\n")
 

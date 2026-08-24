@@ -2,6 +2,42 @@
   "elements": [
     {
       "type": "node",
+      "id": 14116782047,
+      "lat": 34.9226519,
+      "lon": -82.4408228,
+      "tags": {
+        "entrance": "main"
+      }
+    },
+    {
+      "type": "node",
+      "id": 14116782048,
+      "lat": 34.9229198,
+      "lon": -82.4403300,
+      "tags": {
+        "entrance": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 14116782049,
+      "lat": 34.9231554,
+      "lon": -82.4401633,
+      "tags": {
+        "entrance": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3078471933,
+      "lat": 34.9231456,
+      "lon": -82.4395837,
+      "tags": {
+        "entrance": "yes"
+      }
+    },
+    {
+      "type": "node",
       "id": 3079063864,
       "lat": 34.9249899,
       "lon": -82.4375799,
@@ -447,7 +483,7 @@
         "addr:state": "SC",
         "addr:street": "Furman Mall Avenue",
         "building": "university",
-        "name": "John L Pyler Hall",
+        "name": "Pyler Hall",
         "type": "multipolygon"
       }
     },
@@ -1627,10 +1663,10 @@
       "type": "way",
       "id": 1118346861,
       "bounds": {
-        "minlat": 34.9217920,
+        "minlat": 34.9217936,
         "minlon": -82.4424938,
         "maxlat": 34.9222518,
-        "maxlon": -82.4419610
+        "maxlon": -82.4419542
       },
       "nodes": [
         3082164559,
@@ -1641,12 +1677,12 @@
       ],
       "geometry": [
         {
-          "lat": 34.9217954,
-          "lon": -82.4419610
+          "lat": 34.9217936,
+          "lon": -82.4419542
         },
         {
-          "lat": 34.9217920,
-          "lon": -82.4420398
+          "lat": 34.9218018,
+          "lon": -82.4420359
         },
         {
           "lat": 34.9218229,
@@ -4686,6 +4722,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -4716,6 +4753,7 @@
         "bridge": "yes",
         "highway": "footway",
         "layer": "1",
+        "lit": "yes",
         "surface": "wood"
       }
     },
@@ -4759,6 +4797,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -4789,6 +4828,7 @@
         "bridge": "yes",
         "highway": "footway",
         "layer": "1",
+        "lit": "yes",
         "surface": "wood"
       }
     },
@@ -5263,6 +5303,9 @@
       ],
       "tags": {
         "highway": "unclassified",
+        "lane_markings": "no",
+        "maxheight": "15'3\"",
+        "maxheight:signed": "no",
         "name": "Carl Kohrt Drive",
         "surface": "asphalt",
         "tiger:cfcc": "A41",
@@ -17968,8 +18011,10 @@
       ],
       "tags": {
         "building": "dormitory",
+        "building:levels": "4",
         "name": "Blackwell Hall",
-        "old_name": "Lakeview Hall"
+        "old_name": "Lakeview Hall",
+        "smoking": "no"
       }
     },
     {
@@ -43791,6 +43836,167 @@
     },
     {
       "type": "way",
+      "id": 1551857555,
+      "bounds": {
+        "minlat": 34.9234174,
+        "minlon": -82.4383664,
+        "maxlat": 34.9236022,
+        "maxlon": -82.4381773
+      },
+      "nodes": [
+        3078471971,
+        3078471959
+      ],
+      "geometry": [
+        {
+          "lat": 34.9236022,
+          "lon": -82.4381773
+        },
+        {
+          "lat": 34.9234174,
+          "lon": -82.4383664
+        }
+      ],
+      "tags": {
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1551857557,
+      "bounds": {
+        "minlat": 34.9233954,
+        "minlon": -82.4383892,
+        "maxlat": 34.9234174,
+        "maxlon": -82.4383664
+      },
+      "nodes": [
+        3078471959,
+        3078471960
+      ],
+      "geometry": [
+        {
+          "lat": 34.9234174,
+          "lon": -82.4383664
+        },
+        {
+          "lat": 34.9233954,
+          "lon": -82.4383892
+        }
+      ],
+      "tags": {
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1551878244,
+      "bounds": {
+        "minlat": 34.9227819,
+        "minlon": -82.4404522,
+        "maxlat": 34.9232785,
+        "maxlon": -82.4399147
+      },
+      "nodes": [
+        3082164554,
+        14117089394,
+        14117089390,
+        14117089391,
+        14117089392,
+        14117089393,
+        3087553500
+      ],
+      "geometry": [
+        {
+          "lat": 34.9227819,
+          "lon": -82.4404522
+        },
+        {
+          "lat": 34.9228934,
+          "lon": -82.4403010
+        },
+        {
+          "lat": 34.9231708,
+          "lon": -82.4399249
+        },
+        {
+          "lat": 34.9231868,
+          "lon": -82.4399147
+        },
+        {
+          "lat": 34.9232080,
+          "lon": -82.4399153
+        },
+        {
+          "lat": 34.9232148,
+          "lon": -82.4399205
+        },
+        {
+          "lat": 34.9232785,
+          "lon": -82.4400032
+        }
+      ],
+      "tags": {
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1551878245,
+      "bounds": {
+        "minlat": 34.9228934,
+        "minlon": -82.4403300,
+        "maxlat": 34.9229198,
+        "maxlon": -82.4403010
+      },
+      "nodes": [
+        14117089394,
+        14116782048
+      ],
+      "geometry": [
+        {
+          "lat": 34.9228934,
+          "lon": -82.4403010
+        },
+        {
+          "lat": 34.9229198,
+          "lon": -82.4403300
+        }
+      ],
+      "tags": {
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1551878246,
+      "bounds": {
+        "minlat": 34.9226449,
+        "minlon": -82.4408332,
+        "maxlat": 34.9226519,
+        "maxlon": -82.4408228
+      },
+      "nodes": [
+        3079064173,
+        14116782047
+      ],
+      "geometry": [
+        {
+          "lat": 34.9226449,
+          "lon": -82.4408332
+        },
+        {
+          "lat": 34.9226519,
+          "lon": -82.4408228
+        }
+      ],
+      "tags": {
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
       "id": 172331158,
       "bounds": {
         "minlat": 34.9159610,
@@ -45794,14 +46000,15 @@
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "paving_stones"
       }
     },
     {
       "type": "way",
       "id": 303491781,
       "bounds": {
-        "minlat": 34.9233954,
+        "minlat": 34.9234174,
         "minlon": -82.4384676,
         "maxlat": 34.9237585,
         "maxlon": -82.4383664
@@ -45818,8 +46025,7 @@
         3078471956,
         3078471957,
         3078471958,
-        3078471959,
-        3078471960
+        3078471959
       ],
       "geometry": [
         {
@@ -45869,21 +46075,18 @@
         {
           "lat": 34.9234174,
           "lon": -82.4383664
-        },
-        {
-          "lat": 34.9233954,
-          "lon": -82.4383892
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "concrete"
       }
     },
     {
       "type": "way",
       "id": 303491782,
       "bounds": {
-        "minlat": 34.9234174,
+        "minlat": 34.9235725,
         "minlon": -82.4386349,
         "maxlat": 34.9236176,
         "maxlon": -82.4381773
@@ -45902,8 +46105,7 @@
         3078471969,
         3092857602,
         3078471970,
-        3078471971,
-        3078471959
+        3078471971
       ],
       "geometry": [
         {
@@ -45961,14 +46163,11 @@
         {
           "lat": 34.9236022,
           "lon": -82.4381773
-        },
-        {
-          "lat": 34.9234174,
-          "lon": -82.4383664
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "concrete"
       }
     },
     {
@@ -46674,7 +46873,8 @@
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "paving_stones"
       }
     },
     {
@@ -46721,7 +46921,8 @@
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "paving_stones"
       }
     },
     {
@@ -47052,7 +47253,8 @@
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "asphalt"
       }
     },
     {
@@ -48728,6 +48930,7 @@
         3079064157,
         3079064154,
         3079064155,
+        14117089395,
         3079064156
       ],
       "geometry": [
@@ -48762,6 +48965,10 @@
         {
           "lat": 34.9230001,
           "lon": -82.4413026
+        },
+        {
+          "lat": 34.9230853,
+          "lon": -82.4412859
         },
         {
           "lat": 34.9232703,
@@ -49431,7 +49638,8 @@
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "paving_stones"
       }
     },
     {
@@ -49488,7 +49696,8 @@
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "paving_stones"
       }
     },
     {
@@ -49641,9 +49850,9 @@
       "type": "way",
       "id": 303790655,
       "bounds": {
-        "minlat": 34.9217954,
-        "minlon": -82.4419610,
-        "maxlat": 34.9227859,
+        "minlat": 34.9217936,
+        "minlon": -82.4419542,
+        "maxlat": 34.9227819,
         "maxlon": -82.4391976
       },
       "nodes": [
@@ -49681,6 +49890,8 @@
         3082164556,
         3082164557,
         3082164558,
+        14117089388,
+        14117089389,
         3082164559
       ],
       "geometry": [
@@ -49801,28 +50012,36 @@
           "lon": -82.4404138
         },
         {
-          "lat": 34.9227859,
-          "lon": -82.4404608
+          "lat": 34.9227819,
+          "lon": -82.4404522
         },
         {
-          "lat": 34.9226448,
-          "lon": -82.4406489
+          "lat": 34.9226381,
+          "lon": -82.4406398
         },
         {
-          "lat": 34.9224287,
-          "lon": -82.4409618
+          "lat": 34.9224138,
+          "lon": -82.4409514
         },
         {
-          "lat": 34.9222624,
-          "lon": -82.4412194
+          "lat": 34.9222533,
+          "lon": -82.4412051
         },
         {
-          "lat": 34.9220080,
-          "lon": -82.4416136
+          "lat": 34.9219952,
+          "lon": -82.4416028
         },
         {
-          "lat": 34.9217954,
-          "lon": -82.4419610
+          "lat": 34.9218906,
+          "lon": -82.4417790
+        },
+        {
+          "lat": 34.9218118,
+          "lon": -82.4419047
+        },
+        {
+          "lat": 34.9217936,
+          "lon": -82.4419542
         }
       ],
       "tags": {
@@ -50757,7 +50976,8 @@
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "paving_stones"
       }
     },
     {
@@ -50784,7 +51004,8 @@
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "paving_stones"
       }
     },
     {
@@ -52014,7 +52235,8 @@
         }
       ],
       "tags": {
-        "highway": "footway"
+        "highway": "footway",
+        "surface": "concrete"
       }
     },
     {
@@ -52321,6 +52543,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -52586,6 +52809,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -52664,6 +52888,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -52722,6 +52947,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -52815,6 +53041,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -52868,6 +53095,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -52906,6 +53134,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -54556,6 +54785,7 @@
       ],
       "tags": {
         "highway": "footway",
+        "lit": "yes",
         "surface": "concrete"
       }
     },
@@ -54844,7 +55074,9 @@
         "addr:housenumber": "B",
         "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
-        "name": "B"
+        "building:levels": "3",
+        "name": "B",
+        "roof:levels": "0"
       }
     },
     {
@@ -55122,8 +55354,10 @@
       ],
       "tags": {
         "building": "dormitory",
+        "building:levels": "3",
         "name": "C",
-        "nohousenumber": "yes"
+        "nohousenumber": "yes",
+        "roof:levels": "0"
       }
     },
     {
@@ -58423,10 +58657,10 @@
       "type": "way",
       "id": 304225500,
       "bounds": {
-        "minlat": 34.9234950,
+        "minlat": 34.9235007,
         "minlon": -82.4405881,
         "maxlat": 34.9235456,
-        "maxlon": -82.4405374
+        "maxlon": -82.4405349
       },
       "nodes": [
         3087552912,
@@ -58438,8 +58672,8 @@
           "lon": -82.4405881
         },
         {
-          "lat": 34.9234950,
-          "lon": -82.4405374
+          "lat": 34.9235007,
+          "lon": -82.4405349
         }
       ],
       "tags": {
@@ -58551,8 +58785,8 @@
       "type": "way",
       "id": 304225509,
       "bounds": {
-        "minlat": 34.9234950,
-        "minlon": -82.4405374,
+        "minlat": 34.9235007,
+        "minlon": -82.4405349,
         "maxlat": 34.9236472,
         "maxlon": -82.4403258
       },
@@ -58576,8 +58810,8 @@
           "lon": -82.4403925
         },
         {
-          "lat": 34.9234950,
-          "lon": -82.4405374
+          "lat": 34.9235007,
+          "lon": -82.4405349
         }
       ],
       "tags": {
@@ -62412,6 +62646,7 @@
       ],
       "tags": {
         "highway": "unclassified",
+        "lane_markings": "no",
         "name": "Milford Mall Avenue",
         "oneway": "yes",
         "surface": "asphalt"
@@ -66293,8 +66528,8 @@
       "id": 334254456,
       "bounds": {
         "minlat": 34.9231499,
-        "minlon": -82.4405374,
-        "maxlat": 34.9234950,
+        "minlon": -82.4405349,
+        "maxlat": 34.9235007,
         "maxlon": -82.4401844
       },
       "nodes": [
@@ -66304,8 +66539,8 @@
       ],
       "geometry": [
         {
-          "lat": 34.9234950,
-          "lon": -82.4405374
+          "lat": 34.9235007,
+          "lon": -82.4405349
         },
         {
           "lat": 34.9233189,
@@ -75508,7 +75743,8 @@
         }
       ],
       "tags": {
-        "building": "dormitory"
+        "building": "dormitory",
+        "name": "Earle Lounge"
       }
     },
     {
@@ -75679,7 +75915,8 @@
       ],
       "tags": {
         "building": "university",
-        "name": "Townes Center for Science"
+        "name": "Townes Center for Science",
+        "nohousenumber": "yes"
       }
     },
     {
@@ -76464,8 +76701,11 @@
       ],
       "tags": {
         "addr:housenumber": "D",
+        "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
-        "name": "D"
+        "building:levels": "3",
+        "name": "D",
+        "roof:levels": "0"
       }
     },
     {
@@ -76534,8 +76774,8 @@
           "lon": -82.4409162
         },
         {
-          "lat": 34.9224287,
-          "lon": -82.4409618
+          "lat": 34.9224138,
+          "lon": -82.4409514
         },
         {
           "lat": 34.9225044,
@@ -76617,7 +76857,8 @@
       ],
       "tags": {
         "highway": "service",
-        "service": "parking_aisle"
+        "service": "parking_aisle",
+        "surface": "asphalt"
       }
     },
     {
@@ -76815,8 +77056,13 @@
         }
       ],
       "tags": {
+        "air_conditioning": "yes",
+        "alt_name": "James B. Duke Library",
         "amenity": "library",
         "building": "yes",
+        "indoor_seating": "yes",
+        "internet_access": "wlan",
+        "internet_access:fee": "no",
         "name": "James Buchanan Duke Library",
         "operator": "Furman University"
       }
@@ -77695,7 +77941,7 @@
       ],
       "tags": {
         "building": "university",
-        "name": "Richard W Riley Hall"
+        "name": "Riley Hall"
       }
     },
     {
@@ -78064,7 +78310,8 @@
       ],
       "tags": {
         "highway": "service",
-        "service": "parking_aisle"
+        "service": "parking_aisle",
+        "surface": "asphalt"
       }
     },
     {
@@ -78704,7 +78951,8 @@
       ],
       "tags": {
         "building": "university",
-        "name": "Marshall and Vera Lea Rinker Hall"
+        "name": "Marshall and Vera Lea Rinker Hall",
+        "nohousenumber": "yes"
       }
     },
     {
@@ -79301,7 +79549,8 @@
       "tags": {
         "highway": "service",
         "oneway": "yes",
-        "service": "parking_aisle"
+        "service": "parking_aisle",
+        "surface": "asphalt"
       }
     },
     {
@@ -80070,6 +80319,7 @@
         "bicycle": "designated",
         "foot": "designated",
         "highway": "footway",
+        "lit": "yes",
         "segregated": "no",
         "surface": "concrete"
       }
@@ -80839,7 +81089,7 @@
         "addr:state": "SC",
         "addr:street": "Mary Peace Sterling Circle",
         "building": "university",
-        "name": "John E Johns Hall"
+        "name": "Johns Hall"
       }
     },
     {
@@ -82379,8 +82629,11 @@
       ],
       "tags": {
         "addr:housenumber": "E",
+        "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
-        "name": "E"
+        "building:levels": "3",
+        "name": "E",
+        "roof:levels": "0"
       }
     },
     {
@@ -84421,6 +84674,7 @@
       ],
       "tags": {
         "highway": "unclassified",
+        "lane_markings": "no",
         "name": "William Mcalister Circle",
         "oneway": "yes",
         "surface": "asphalt",
@@ -85464,23 +85718,27 @@
         "minlat": 34.9226052,
         "minlon": -82.4408802,
         "maxlat": 34.9231995,
-        "maxlon": -82.4401284
+        "maxlon": -82.4401176
       },
       "nodes": [
         736992660,
         736992142,
         736992416,
+        14116782048,
         736991748,
+        14116782047,
+        14116782046,
         736992024,
         736992178,
         736992054,
         736991316,
+        14116782049,
         736992660
       ],
       "geometry": [
         {
-          "lat": 34.9231158,
-          "lon": -82.4401284
+          "lat": 34.9231166,
+          "lon": -82.4401176
         },
         {
           "lat": 34.9229738,
@@ -85491,8 +85749,20 @@
           "lon": -82.4402919
         },
         {
+          "lat": 34.9229198,
+          "lon": -82.4403300
+        },
+        {
           "lat": 34.9226052,
           "lon": -82.4407758
+        },
+        {
+          "lat": 34.9226519,
+          "lon": -82.4408228
+        },
+        {
+          "lat": 34.9226571,
+          "lon": -82.4408280
         },
         {
           "lat": 34.9227089,
@@ -85511,13 +85781,19 @@
           "lon": -82.4402186
         },
         {
-          "lat": 34.9231158,
-          "lon": -82.4401284
+          "lat": 34.9231554,
+          "lon": -82.4401633
+        },
+        {
+          "lat": 34.9231166,
+          "lon": -82.4401176
         }
       ],
       "tags": {
         "building": "dormitory",
-        "name": "Geer Hall"
+        "layer": "1",
+        "name": "Geer Hall",
+        "smoking": "no"
       }
     },
     {
@@ -86802,16 +87078,19 @@
       ],
       "tags": {
         "addr:housenumber": "F",
+        "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
-        "name": "F"
+        "building:levels": "3",
+        "name": "F",
+        "roof:levels": "0"
       }
     },
     {
       "type": "way",
       "id": 59434074,
       "bounds": {
-        "minlat": 34.9229763,
-        "minlon": -82.4412812,
+        "minlat": 34.9229942,
+        "minlon": -82.4412626,
         "maxlat": 34.9235437,
         "maxlon": -82.4404888
       },
@@ -86839,20 +87118,20 @@
           "lon": -82.4407992
         },
         {
-          "lat": 34.9229763,
-          "lon": -82.4411773
+          "lat": 34.9229942,
+          "lon": -82.4411599
         },
         {
-          "lat": 34.9230806,
-          "lon": -82.4412812
+          "lat": 34.9230783,
+          "lon": -82.4412626
         },
         {
           "lat": 34.9235437,
           "lon": -82.4405899
         },
         {
-          "lat": 34.9234950,
-          "lon": -82.4405374
+          "lat": 34.9235007,
+          "lon": -82.4405349
         },
         {
           "lat": 34.9234500,
@@ -87643,7 +87922,8 @@
       ],
       "tags": {
         "highway": "service",
-        "service": "parking_aisle"
+        "service": "parking_aisle",
+        "surface": "asphalt"
       }
     },
     {
@@ -87983,7 +88263,9 @@
         "addr:housenumber": "A",
         "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
-        "name": "A"
+        "building:levels": "3",
+        "name": "A",
+        "roof:levels": "0"
       }
     },
     {
@@ -88390,6 +88672,7 @@
       ],
       "tags": {
         "highway": "unclassified",
+        "lane_markings": "no",
         "name": "Milford Mall Avenue",
         "oneway": "yes",
         "surface": "asphalt"
@@ -88960,7 +89243,8 @@
       ],
       "tags": {
         "highway": "service",
-        "service": "parking_aisle"
+        "service": "parking_aisle",
+        "surface": "asphalt"
       }
     },
     {
@@ -89229,7 +89513,8 @@
       "tags": {
         "highway": "service",
         "oneway": "yes",
-        "service": "parking_aisle"
+        "service": "parking_aisle",
+        "surface": "asphalt"
       }
     },
     {
@@ -91808,7 +92093,8 @@
       ],
       "tags": {
         "area": "yes",
-        "highway": "pedestrian"
+        "highway": "pedestrian",
+        "surface": "paving_stones"
       }
     },
     {

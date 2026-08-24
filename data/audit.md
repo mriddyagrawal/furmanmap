@@ -8,14 +8,14 @@ name `Furman University`); whole-bbox figures shown for contrast._
 
 | Metric | Value |
 |---|---|
-| walkable ways | 480 |
-| network km | 52.43 |
-| graph nodes | 4152 |
-| graph edges | 4486 |
-| junctions | 639 |
-| dead ends | 140 |
+| walkable ways | 485 |
+| network km | 52.51 |
+| graph nodes | 4162 |
+| graph edges | 4497 |
+| junctions | 642 |
+| dead ends | 141 |
 | components | 8 |
-| largest component nodes | 4030 |
+| largest component nodes | 4040 |
 | largest component pct | 97.1 |
 | orphan islands | 7 |
 | orphan nodes | 122 |
@@ -29,8 +29,8 @@ _Whole query bbox for contrast: 21 components, 88.0% in the largest, 1030 orphan
 | Metric | Value |
 |---|---|
 | buildings | 82 |
-| buildings named | 55 |
-| entrances | 12 |
+| buildings named | 56 |
+| entrances | 16 |
 | steps ways | 4 |
 
 **Still unnamed in OSM (Phase 1):** Plyler
@@ -57,3 +57,58 @@ A path dead-ends within 8 m of a path it never joins. Almost always a missing sh
 |---|---|
 | 3.5 m | [34.92923, -82.43656](https://www.openstreetmap.org/#map=20/34.92923/-82.43656) |
 | 7.8 m | [34.92882, -82.43748](https://www.openstreetmap.org/#map=20/34.92882/-82.43748) |
+
+## Named, but no category (15)
+
+`building=yes` says a building exists and nothing more. Give each a real value (`university`, `dormitory`, `sports_centre`, `chapel`, `office`…) or an `amenity`, or no category filter can ever exist.
+
+| Building | Now | Edit |
+|---|---|---|
+| Alester G Furman Administration | `building=yes` | [open](https://www.openstreetmap.org/way/59434086) |
+| Cherrydale House | `building=yes` | [open](https://www.openstreetmap.org/way/59433992) |
+| Cliffs Cottage | `building=yes` | [open](https://www.openstreetmap.org/way/306150263) |
+| Furman Athletics | `building=yes` | [open](https://www.openstreetmap.org/way/59433965) |
+| Furman University Bell Tower | `building=yes` | [open](https://www.openstreetmap.org/way/37017956) |
+| Guardhouse | `building=yes` | [open](https://www.openstreetmap.org/way/303491803) |
+| Guardhouse | `building=yes` | [open](https://www.openstreetmap.org/way/303491804) |
+| Herring Center for Continuing Education | `building=yes` | [open](https://www.openstreetmap.org/way/308974906) |
+| Minor Herndon Mickel Tennis Center | `building=yes` | [open](https://www.openstreetmap.org/way/59434004) |
+| Montague Village | `building=yes` | [open](https://www.openstreetmap.org/way/60451087) |
+| Place of Peace | `building=yes` | [open](https://www.openstreetmap.org/way/303958491) |
+| Thomas Spann Farmer Hall | `building=yes` | [open](https://www.openstreetmap.org/way/60451088) |
+| Thoreau Cabin | `building=yes` | [open](https://www.openstreetmap.org/way/315968551) |
+| Timmons Arena | `building=yes` | [open](https://www.openstreetmap.org/relation/4713808) |
+| Younts Conference Center | `building=yes` | [open](https://www.openstreetmap.org/way/59433928) |
+
+## On campus, no name (26)
+
+Unsearchable and unroutable-to until named.
+
+| Now | Where | Edit |
+|---|---|---|
+| `building=detached` | [34.91892, -82.44108](https://www.openstreetmap.org/#map=19/34.91892/-82.44108) | [open](https://www.openstreetmap.org/way/946155488) |
+| `building=shed` | [34.91928, -82.44068](https://www.openstreetmap.org/#map=19/34.91928/-82.44068) | [open](https://www.openstreetmap.org/way/304225506) |
+| `building=yes` | [34.92084, -82.43977](https://www.openstreetmap.org/#map=19/34.92084/-82.43977) | [open](https://www.openstreetmap.org/way/59434077) |
+| `building=yes` | [34.92084, -82.43779](https://www.openstreetmap.org/#map=19/34.92084/-82.43779) | [open](https://www.openstreetmap.org/relation/6696709) |
+| `building=shed` | [34.92112, -82.44188](https://www.openstreetmap.org/#map=19/34.92112/-82.44188) | [open](https://www.openstreetmap.org/way/304698326) |
+| `building=detached` | [34.92117, -82.44165](https://www.openstreetmap.org/#map=19/34.92117/-82.44165) | [open](https://www.openstreetmap.org/way/946155487) |
+| `building=university` | [34.92126, -82.44490](https://www.openstreetmap.org/#map=19/34.92126/-82.44490) | [open](https://www.openstreetmap.org/way/976486682) |
+| `building=yes` | [34.92132, -82.44334](https://www.openstreetmap.org/#map=19/34.92132/-82.44334) | [open](https://www.openstreetmap.org/way/689246921) |
+| `building=dormitory` | [34.92228, -82.44192](https://www.openstreetmap.org/#map=19/34.92228/-82.44192) | [open](https://www.openstreetmap.org/way/59434095) |
+| `building=greenhouse` | [34.92244, -82.43975](https://www.openstreetmap.org/#map=19/34.92244/-82.43975) | [open](https://www.openstreetmap.org/way/303790663) |
+| `building=yes` | [34.92349, -82.44429](https://www.openstreetmap.org/#map=19/34.92349/-82.44429) | [open](https://www.openstreetmap.org/way/59433955) |
+| `building=yes` | [34.92354, -82.44382](https://www.openstreetmap.org/#map=19/34.92354/-82.44382) | [open](https://www.openstreetmap.org/way/59434114) |
+| `building=yes` | [34.92383, -82.44443](https://www.openstreetmap.org/#map=19/34.92383/-82.44443) | [open](https://www.openstreetmap.org/way/304698333) |
+| `building=yes` | [34.92426, -82.44416](https://www.openstreetmap.org/#map=19/34.92426/-82.44416) | [open](https://www.openstreetmap.org/way/59434076) |
+| `building=yes` | [34.92533, -82.43643](https://www.openstreetmap.org/#map=19/34.92533/-82.43643) | [open](https://www.openstreetmap.org/way/59434039) |
+| `building=university` | [34.92578, -82.43778](https://www.openstreetmap.org/#map=19/34.92578/-82.43778) | [open](https://www.openstreetmap.org/way/59434058) |
+| `building=yes` | [34.92700, -82.43890](https://www.openstreetmap.org/#map=19/34.92700/-82.43890) | [open](https://www.openstreetmap.org/way/1425708674) |
+| `building=yes` | [34.92703, -82.44247](https://www.openstreetmap.org/#map=19/34.92703/-82.44247) | [open](https://www.openstreetmap.org/way/37299210) |
+| `building=yes` | [34.92728, -82.44186](https://www.openstreetmap.org/#map=19/34.92728/-82.44186) | [open](https://www.openstreetmap.org/way/58710083) |
+| `building=university` | [34.92844, -82.43405](https://www.openstreetmap.org/#map=19/34.92844/-82.43405) | [open](https://www.openstreetmap.org/way/303958524) |
+| `building=dormitory` | [34.92877, -82.43885](https://www.openstreetmap.org/#map=19/34.92877/-82.43885) | [open](https://www.openstreetmap.org/way/304036799) |
+| `building=dormitory` | [34.92878, -82.43857](https://www.openstreetmap.org/#map=19/34.92878/-82.43857) | [open](https://www.openstreetmap.org/way/304079106) |
+| `building=dormitory` | [34.92881, -82.43912](https://www.openstreetmap.org/#map=19/34.92881/-82.43912) | [open](https://www.openstreetmap.org/way/306150273) |
+| `building=dormitory` | [34.92883, -82.43811](https://www.openstreetmap.org/#map=19/34.92883/-82.43811) | [open](https://www.openstreetmap.org/way/306150272) |
+| `building=yes` | [34.92896, -82.43945](https://www.openstreetmap.org/#map=19/34.92896/-82.43945) | [open](https://www.openstreetmap.org/way/306150280) |
+| `building=greenhouse` | [34.92932, -82.43816](https://www.openstreetmap.org/#map=19/34.92932/-82.43816) | [open](https://www.openstreetmap.org/way/1424883514) |
