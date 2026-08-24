@@ -21,7 +21,26 @@ python3 scripts/audit.py            # -> data/audit.md (mapper punch list) + dat
 BBOX=34.924,-82.440,34.925,-82.439 ./scripts/fetch-osm.sh   # small box, for testing the pipeline
 ```
 
-Scripts are stdlib-only Python 3 and bash on purpose — CI needs no install step.
+```bash
+node --test tests/*.test.js          # router tests (Node's built-in runner)
+python3 -m http.server 8765          # then open http://localhost:8765 — the app
+                                     # fetches data/*.geojson, so file:// will not work
+```
+
+Scripts are stdlib-only Python 3 and bash, tests use Node's built-in runner, and
+the app loads MapLibre and Fuse from a CDN — on purpose. There is no install step
+and no build step anywhere in this repo. Keep it that way unless there is a reason
+that survives being written down.
+
+## Where the code lives
+
+- `graph.js` — routing core: graph build, A*, geometry. Pure functions, no DOM,
+  so it runs in the browser *and* under `node --test`. Put logic here.
+- `app.js` — map, layers, search, UI wiring. DOM-dependent, untested by design.
+- `index.html` / `style.css` — one page.
+
+If you are tempted to put routing logic in `app.js`, don't: that is how the router
+becomes untestable.
 
 ## Architecture invariants
 
