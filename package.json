@@ -5,6 +5,8 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test",
+    "test:all": "npm test && npm run test:e2e",
     "serve": "python3 -m http.server 8765",
     "data": "./scripts/fetch-osm.sh && python3 scripts/build-geojson.py && python3 scripts/audit.py"
   },
@@ -12,5 +14,10 @@
     "@turf/turf": "^7.1.0",
     "ngraph.graph": "^20.0.1",
     "ngraph.path": "^1.5.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
+    "axe-core": "^4.13.0"
   }
 }
