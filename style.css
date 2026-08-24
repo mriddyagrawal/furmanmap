@@ -15,6 +15,7 @@
   --line:        #e0dde6;
   --warn:        #a3341a;
   --shadow:      rgba(0, 0, 0, .18);
+  --dot:         #1da1f2;   /* matches MapLibre's own user-location dot */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,6 +32,7 @@
     --line:        #3b3946;
     --warn:        #ff9f7a;
     --shadow:      rgba(0, 0, 0, .5);
+    --dot:         #4cb8ff;
   }
 }
 
@@ -77,13 +79,11 @@ button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
   font-size: 15px; line-height: 1; padding: 10px 10px;
 }
 #compass-label { font-size: 12px; font-weight: 600; letter-spacing: .02em; }
-#compass-arrow {
-  display: inline-block; transform: rotate(0deg);
-  transition: transform .12s linear;      /* the rAF loop already smooths; this
-                                             only takes the edge off rounding */
-  color: var(--ink-soft);
-}
-#compass.live #compass-arrow { color: var(--purple); }
+/* A real SVG rather than a rotated text glyph: a character's shape, baseline
+ * and rest orientation vary by font, which is why the arrow looked wrong and
+ * needed a 90-degree correction. This points north at rest, everywhere. */
+#compass-arrow { display: block; fill: var(--ink-soft); transform: rotate(0deg); }
+#compass.live #compass-arrow { fill: var(--dot); }
 
 /* Cone on the blue dot showing which way you are facing.
  *
@@ -100,8 +100,8 @@ button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
   content: ""; width: 0; height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-bottom: 17px solid var(--purple);
-  opacity: .65;
+  border-bottom: 17px solid var(--dot);
+  opacity: .8;
 }
 
 #results { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow-y: auto; }
