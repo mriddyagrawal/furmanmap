@@ -113,3 +113,4 @@ button.primary:hover { background: var(--purple-dim); border-color: var(--purple
 #nav-note { margin: 0; font-size: 13px; color: var(--ink-soft); }
 #nav.arrived .eta strong { color: var(--purple); }
 .warn { color: var(--warn); }
+#build { margin: 0; font-size: 11px; color: var(--ink-soft); opacity: .65; }

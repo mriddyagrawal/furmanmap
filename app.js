@@ -5,6 +5,11 @@
  * scripts in scripts/. There is no backend.
  */
 
+// Bumped whenever something user-visible changes. GitHub Pages caches for ten
+// minutes, so "it is not there" and "you are looking at an old copy" are easy
+// to confuse — this makes the running version checkable at a glance.
+const BUILD = '2026-08-24 · follow-mode';
+
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
 const WALK_M_PER_MIN = 80;          // field-validate this; Furman has hills
@@ -112,8 +117,11 @@ async function main() {
     map.on('mouseenter', 'building-fill', () => map.getCanvas().style.cursor = 'pointer');
     map.on('mouseleave', 'building-fill', () => map.getCanvas().style.cursor = '');
 
-    hint(`${named.length} buildings · ${state.graph.size.toLocaleString()} path nodes. `
-       + `Tap a building, then another, to route.`);
+    hint(`Tap a building, then another, to route.`);
+    $('build').textContent = BUILD;
+    $('build').title = `${named.length} buildings · `
+      + `${state.graph.size.toLocaleString()} path nodes`;
+    console.info(`Furman Wayfinder build ${BUILD}`);
   });
 
   state.map = map;
