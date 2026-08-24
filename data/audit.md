@@ -8,20 +8,20 @@ name `Furman University`); whole-bbox figures shown for contrast._
 
 | Metric | Value |
 |---|---|
-| walkable ways | 494 |
-| network km | 52.65 |
-| graph nodes | 4185 |
-| graph edges | 4525 |
-| junctions | 653 |
-| dead ends | 143 |
-| components | 7 |
-| largest component nodes | 4069 |
-| largest component pct | 97.2 |
-| orphan islands | 6 |
-| orphan nodes | 116 |
+| walkable ways | 558 |
+| network km | 53.57 |
+| graph nodes | 4327 |
+| graph edges | 4687 |
+| junctions | 698 |
+| dead ends | 159 |
+| components | 6 |
+| largest component nodes | 4226 |
+| largest component pct | 97.7 |
+| orphan islands | 5 |
+| orphan nodes | 101 |
 | near miss gaps | 2 |
 
-_Whole query bbox for contrast: 20 components, 88.1% in the largest, 1024 orphan nodes — the extra islands are off-campus fringe._
+_Whole query bbox for contrast: 19 components, 88.5% in the largest, 1009 orphan nodes — the extra islands are off-campus fringe._
 
 
 ## Completeness (on campus)
@@ -30,17 +30,16 @@ _Whole query bbox for contrast: 20 components, 88.1% in the largest, 1024 orphan
 |---|---|
 | buildings | 82 |
 | buildings named | 59 |
-| entrances | 31 |
-| steps ways | 5 |
+| entrances | 47 |
+| steps ways | 12 |
 
-## Orphan path islands (6)
+## Orphan path islands (5)
 
 Routing drops these — a path here can't be reached from the rest of campus.
 
 | Nodes | Go look |
 |---|---|
 | 79 | [34.92667, -82.43728](https://www.openstreetmap.org/#map=19/34.92667/-82.43728) |
-| 15 | [34.93016, -82.43454](https://www.openstreetmap.org/#map=19/34.93016/-82.43454) |
 | 13 | [34.92923, -82.43656](https://www.openstreetmap.org/#map=19/34.92923/-82.43656) |
 | 4 | [34.92334, -82.44065](https://www.openstreetmap.org/#map=19/34.92334/-82.44065) |
 | 3 | [34.92537, -82.43454](https://www.openstreetmap.org/#map=19/34.92537/-82.43454) |
