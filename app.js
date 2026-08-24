@@ -43,9 +43,26 @@ async function main() {
     hash: true                      // URL keeps the view, so links are shareable
   });
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
-  map.addControl(new maplibregl.GeolocateControl({
-    positionOptions: { enableHighAccuracy: true }, trackUserLocation: true
-  }), 'bottom-right');
+  // One source of location for the whole app. The panel's button triggers this
+  // control rather than calling navigator.geolocation separately, so the blue
+  // dot and the route origin can never disagree about where you are.
+  state.geo = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    trackUserLocation: true, showUserLocation: true, showAccuracyCircle: true
+  });
+  map.addControl(state.geo, 'bottom-right');
+  state.geo.on('geolocate', pos => {
+    state.from = { name: 'My location',
+                   point: [pos.coords.longitude, pos.coords.latitude] };
+    hint('');
+    draw();
+  });
+  state.geo.on('error', err => {
+    hint(err && err.code === 1
+      ? 'Location permission denied — allow it in your browser’s site settings.'
+      : 'Location unavailable. On a phone this needs HTTPS, not a plain http:// address.',
+      true);
+  });
 
   map.on('load', () => {
     map.addSource('boundary', { type: 'geojson', data: boundary });
@@ -90,8 +107,8 @@ async function main() {
     map.on('mouseenter', 'building-fill', () => map.getCanvas().style.cursor = 'pointer');
     map.on('mouseleave', 'building-fill', () => map.getCanvas().style.cursor = '');
 
-    $('hint').textContent =
-      `${named.length} buildings · ${(state.graph.size).toLocaleString()} path nodes ready`;
+    hint(`${named.length} buildings · ${state.graph.size.toLocaleString()} path nodes. `
+       + `Tap a building, then another, to route.`);
   });
 
   state.map = map;
@@ -100,6 +117,10 @@ async function main() {
 }
 
 const empty = () => ({ type: 'FeatureCollection', features: [] });
+
+function hint(text, warn) {
+  $('hint').innerHTML = warn ? `<span class="warn">${text}</span>` : text;
+}
 
 /* Snap a building to the graph: its mapped door if there is one, else the
    nearest node to its centroid. Returns the node plus the real-world point so
@@ -129,7 +150,13 @@ function draw() {
   $('from').textContent = label(state.from);
   $('to').textContent = label(state.to);
   $('route').hidden = !(state.from && state.to);
-  if (!(state.from && state.to)) return;
+  if (!(state.from && state.to)) {
+    // Half a route is still progress — say what is missing instead of nothing.
+    if (state.from) hint(`From ${label(state.from)} — now pick a destination.`);
+    else if (state.to) hint(`To ${label(state.to)} — tap another building, or ◎ for your location.`);
+    return;
+  }
+  hint('');
 
   const a = state.from.geometry ? snap(state.from)
                                 : { node: nearestNode(state.from.point), point: state.from.point };
@@ -203,18 +230,15 @@ function wireControls() {
     state.map.getSource('leader').setData(empty());
   };
   $('locate').onclick = () => {
-    if (!navigator.geolocation) return;
-    $('hint').textContent = 'Finding you…';
-    navigator.geolocation.getCurrentPosition(pos => {
-      state.from = { name: 'My location', point: [pos.coords.longitude, pos.coords.latitude] };
-      $('hint').textContent = '';
-      draw();
-    }, () => { $('hint').innerHTML = '<span class="warn">Location unavailable.</span>'; },
-       { enableHighAccuracy: true, timeout: 8000 });
+    if (!window.isSecureContext) {
+      return hint('Location needs a secure page: use localhost or an https:// address.', true);
+    }
+    hint('Finding you…');
+    state.geo.trigger();          // same control that draws the blue dot
   };
 }
 
 main().catch(e => {
-  $('hint').innerHTML = '<span class="warn">Could not load campus data.</span>';
+  hint('Could not load campus data.', true);
   console.error(e);
 });
