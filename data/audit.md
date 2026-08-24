@@ -8,20 +8,20 @@ name `Furman University`); whole-bbox figures shown for contrast._
 
 | Metric | Value |
 |---|---|
-| walkable ways | 485 |
-| network km | 52.51 |
-| graph nodes | 4162 |
-| graph edges | 4497 |
-| junctions | 642 |
-| dead ends | 141 |
-| components | 8 |
-| largest component nodes | 4040 |
-| largest component pct | 97.1 |
-| orphan islands | 7 |
-| orphan nodes | 122 |
+| walkable ways | 487 |
+| network km | 52.53 |
+| graph nodes | 4166 |
+| graph edges | 4502 |
+| junctions | 645 |
+| dead ends | 142 |
+| components | 7 |
+| largest component nodes | 4050 |
+| largest component pct | 97.2 |
+| orphan islands | 6 |
+| orphan nodes | 116 |
 | near miss gaps | 2 |
 
-_Whole query bbox for contrast: 21 components, 88.0% in the largest, 1030 orphan nodes — the extra islands are off-campus fringe._
+_Whole query bbox for contrast: 20 components, 88.1% in the largest, 1024 orphan nodes — the extra islands are off-campus fringe._
 
 
 ## Completeness (on campus)
@@ -29,13 +29,13 @@ _Whole query bbox for contrast: 21 components, 88.0% in the largest, 1030 orphan
 | Metric | Value |
 |---|---|
 | buildings | 82 |
-| buildings named | 56 |
-| entrances | 16 |
+| buildings named | 59 |
+| entrances | 22 |
 | steps ways | 4 |
 
 **Still unnamed in OSM (Phase 1):** Plyler
 
-## Orphan path islands (7)
+## Orphan path islands (6)
 
 Routing drops these — a path here can't be reached from the rest of campus.
 
@@ -44,7 +44,6 @@ Routing drops these — a path here can't be reached from the rest of campus.
 | 79 | [34.92667, -82.43728](https://www.openstreetmap.org/#map=19/34.92667/-82.43728) |
 | 15 | [34.93016, -82.43454](https://www.openstreetmap.org/#map=19/34.93016/-82.43454) |
 | 13 | [34.92923, -82.43656](https://www.openstreetmap.org/#map=19/34.92923/-82.43656) |
-| 6 | [34.93160, -82.43701](https://www.openstreetmap.org/#map=19/34.93160/-82.43701) |
 | 4 | [34.92334, -82.44065](https://www.openstreetmap.org/#map=19/34.92334/-82.44065) |
 | 3 | [34.92537, -82.43454](https://www.openstreetmap.org/#map=19/34.92537/-82.43454) |
 | 2 | [34.92236, -82.44359](https://www.openstreetmap.org/#map=19/34.92236/-82.44359) |
@@ -80,7 +79,7 @@ A path dead-ends within 8 m of a path it never joins. Almost always a missing sh
 | Timmons Arena | `building=yes` | [open](https://www.openstreetmap.org/relation/4713808) |
 | Younts Conference Center | `building=yes` | [open](https://www.openstreetmap.org/way/59433928) |
 
-## On campus, no name (26)
+## On campus, no name (23)
 
 Unsearchable and unroutable-to until named.
 
@@ -88,20 +87,17 @@ Unsearchable and unroutable-to until named.
 |---|---|---|
 | `building=detached` | [34.91892, -82.44108](https://www.openstreetmap.org/#map=19/34.91892/-82.44108) | [open](https://www.openstreetmap.org/way/946155488) |
 | `building=shed` | [34.91928, -82.44068](https://www.openstreetmap.org/#map=19/34.91928/-82.44068) | [open](https://www.openstreetmap.org/way/304225506) |
-| `building=yes` | [34.92084, -82.43977](https://www.openstreetmap.org/#map=19/34.92084/-82.43977) | [open](https://www.openstreetmap.org/way/59434077) |
 | `building=yes` | [34.92084, -82.43779](https://www.openstreetmap.org/#map=19/34.92084/-82.43779) | [open](https://www.openstreetmap.org/relation/6696709) |
 | `building=shed` | [34.92112, -82.44188](https://www.openstreetmap.org/#map=19/34.92112/-82.44188) | [open](https://www.openstreetmap.org/way/304698326) |
 | `building=detached` | [34.92117, -82.44165](https://www.openstreetmap.org/#map=19/34.92117/-82.44165) | [open](https://www.openstreetmap.org/way/946155487) |
 | `building=university` | [34.92126, -82.44490](https://www.openstreetmap.org/#map=19/34.92126/-82.44490) | [open](https://www.openstreetmap.org/way/976486682) |
 | `building=yes` | [34.92132, -82.44334](https://www.openstreetmap.org/#map=19/34.92132/-82.44334) | [open](https://www.openstreetmap.org/way/689246921) |
-| `building=dormitory` | [34.92228, -82.44192](https://www.openstreetmap.org/#map=19/34.92228/-82.44192) | [open](https://www.openstreetmap.org/way/59434095) |
 | `building=greenhouse` | [34.92244, -82.43975](https://www.openstreetmap.org/#map=19/34.92244/-82.43975) | [open](https://www.openstreetmap.org/way/303790663) |
 | `building=yes` | [34.92349, -82.44429](https://www.openstreetmap.org/#map=19/34.92349/-82.44429) | [open](https://www.openstreetmap.org/way/59433955) |
 | `building=yes` | [34.92354, -82.44382](https://www.openstreetmap.org/#map=19/34.92354/-82.44382) | [open](https://www.openstreetmap.org/way/59434114) |
 | `building=yes` | [34.92383, -82.44443](https://www.openstreetmap.org/#map=19/34.92383/-82.44443) | [open](https://www.openstreetmap.org/way/304698333) |
 | `building=yes` | [34.92426, -82.44416](https://www.openstreetmap.org/#map=19/34.92426/-82.44416) | [open](https://www.openstreetmap.org/way/59434076) |
 | `building=yes` | [34.92533, -82.43643](https://www.openstreetmap.org/#map=19/34.92533/-82.43643) | [open](https://www.openstreetmap.org/way/59434039) |
-| `building=university` | [34.92578, -82.43778](https://www.openstreetmap.org/#map=19/34.92578/-82.43778) | [open](https://www.openstreetmap.org/way/59434058) |
 | `building=yes` | [34.92700, -82.43890](https://www.openstreetmap.org/#map=19/34.92700/-82.43890) | [open](https://www.openstreetmap.org/way/1425708674) |
 | `building=yes` | [34.92703, -82.44247](https://www.openstreetmap.org/#map=19/34.92703/-82.44247) | [open](https://www.openstreetmap.org/way/37299210) |
 | `building=yes` | [34.92728, -82.44186](https://www.openstreetmap.org/#map=19/34.92728/-82.44186) | [open](https://www.openstreetmap.org/way/58710083) |

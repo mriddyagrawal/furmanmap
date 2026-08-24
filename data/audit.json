@@ -1,40 +1,40 @@
 {
   "stats": {
-    "walkable_ways": 485,
-    "graph_nodes": 4162,
-    "graph_edges": 4497,
-    "network_km": 52.51,
-    "junctions": 642,
-    "dead_ends": 141,
-    "components": 8,
-    "largest_component_nodes": 4040,
-    "largest_component_pct": 97.1,
-    "orphan_islands": 7,
-    "orphan_nodes": 122,
+    "walkable_ways": 487,
+    "graph_nodes": 4166,
+    "graph_edges": 4502,
+    "network_km": 52.53,
+    "junctions": 645,
+    "dead_ends": 142,
+    "components": 7,
+    "largest_component_nodes": 4050,
+    "largest_component_pct": 97.2,
+    "orphan_islands": 6,
+    "orphan_nodes": 116,
     "near_miss_gaps": 2,
     "buildings": 82,
-    "buildings_named": 56,
+    "buildings_named": 59,
     "buildings_in_bbox": 516,
-    "entrances": 16,
+    "entrances": 22,
     "steps_ways": 4,
     "phase1_buildings_still_unnamed": [
       "Plyler"
     ],
-    "buildings_unnamed": 26,
+    "buildings_unnamed": 23,
     "buildings_uncategorised": 15
   },
   "whole_bbox": {
-    "walkable_ways": 1051,
-    "graph_nodes": 8571,
-    "graph_edges": 9050,
-    "network_km": 139.49,
-    "junctions": 1250,
-    "dead_ends": 498,
-    "components": 21,
-    "largest_component_nodes": 7541,
-    "largest_component_pct": 88.0,
-    "orphan_islands": 20,
-    "orphan_nodes": 1030,
+    "walkable_ways": 1053,
+    "graph_nodes": 8575,
+    "graph_edges": 9055,
+    "network_km": 139.5,
+    "junctions": 1253,
+    "dead_ends": 499,
+    "components": 20,
+    "largest_component_nodes": 7551,
+    "largest_component_pct": 88.1,
+    "orphan_islands": 19,
+    "orphan_nodes": 1024,
     "near_miss_gaps": 4
   },
   "gaps": [
@@ -173,31 +173,10 @@
     },
     {
       "name": null,
-      "building": "university",
-      "osm": "https://www.openstreetmap.org/way/59434058",
-      "lat": 34.925775481818185,
-      "lon": -82.43778071818183
-    },
-    {
-      "name": null,
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/59434076",
       "lat": 34.92426134,
       "lon": -82.44416132
-    },
-    {
-      "name": null,
-      "building": "yes",
-      "osm": "https://www.openstreetmap.org/way/59434077",
-      "lat": 34.920836348,
-      "lon": -82.43977047200002
-    },
-    {
-      "name": null,
-      "building": "dormitory",
-      "osm": "https://www.openstreetmap.org/way/59434095",
-      "lat": 34.9222797,
-      "lon": -82.44191919285716
     },
     {
       "name": null,

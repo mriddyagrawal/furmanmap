@@ -29,6 +29,60 @@
     },
     {
       "type": "node",
+      "id": 14117731821,
+      "lat": 34.9314061,
+      "lon": -82.4369124,
+      "tags": {
+        "entrance": "main"
+      }
+    },
+    {
+      "type": "node",
+      "id": 14117746308,
+      "lat": 34.9312546,
+      "lon": -82.4373315,
+      "tags": {
+        "entrance": "main"
+      }
+    },
+    {
+      "type": "node",
+      "id": 14117746309,
+      "lat": 34.9315046,
+      "lon": -82.4374367,
+      "tags": {
+        "entrance": "main"
+      }
+    },
+    {
+      "type": "node",
+      "id": 14117751447,
+      "lat": 34.9212674,
+      "lon": -82.4394819,
+      "tags": {
+        "entrance": "main"
+      }
+    },
+    {
+      "type": "node",
+      "id": 14117751448,
+      "lat": 34.9223442,
+      "lon": -82.4393152,
+      "tags": {
+        "entrance": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 14117751449,
+      "lat": 34.9220218,
+      "lon": -82.4416754,
+      "tags": {
+        "entrance": "yes"
+      }
+    },
+    {
+      "type": "node",
       "id": 3078471933,
       "lat": 34.9231456,
       "lon": -82.4395837,
@@ -329,6 +383,10 @@
             {
               "lat": 34.9222749,
               "lon": -82.4392314
+            },
+            {
+              "lat": 34.9223442,
+              "lon": -82.4393152
             },
             {
               "lat": 34.9224135,
@@ -43997,6 +44055,61 @@
     },
     {
       "type": "way",
+      "id": 1551879066,
+      "bounds": {
+        "minlat": 34.9313815,
+        "minlon": -82.4369124,
+        "maxlat": 34.9314061,
+        "maxlon": -82.4368551
+      },
+      "nodes": [
+        14117731822,
+        14117731821
+      ],
+      "geometry": [
+        {
+          "lat": 34.9313815,
+          "lon": -82.4368551
+        },
+        {
+          "lat": 34.9314061,
+          "lon": -82.4369124
+        }
+      ],
+      "tags": {
+        "highway": "footway",
+        "surface": "concrete"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1551879996,
+      "bounds": {
+        "minlat": 34.9219766,
+        "minlon": -82.4416754,
+        "maxlat": 34.9220218,
+        "maxlon": -82.4416363
+      },
+      "nodes": [
+        14117751450,
+        14117751449
+      ],
+      "geometry": [
+        {
+          "lat": 34.9219766,
+          "lon": -82.4416363
+        },
+        {
+          "lat": 34.9220218,
+          "lon": -82.4416754
+        }
+      ],
+      "tags": {
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
       "id": 172331158,
       "bounds": {
         "minlat": 34.9159610,
@@ -49890,6 +50003,7 @@
         3082164556,
         3082164557,
         3082164558,
+        14117751450,
         14117089388,
         14117089389,
         3082164559
@@ -50030,6 +50144,10 @@
         {
           "lat": 34.9219952,
           "lon": -82.4416028
+        },
+        {
+          "lat": 34.9219766,
+          "lon": -82.4416363
         },
         {
           "lat": 34.9218906,
@@ -54078,6 +54196,7 @@
         3084659105,
         3084659106,
         3084659107,
+        14117731822,
         3084659108,
         3084659109,
         3084659110,
@@ -54121,6 +54240,10 @@
         {
           "lat": 34.9314008,
           "lon": -82.4368482
+        },
+        {
+          "lat": 34.9313815,
+          "lon": -82.4368551
         },
         {
           "lat": 34.9313183,
@@ -55075,7 +55198,7 @@
         "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
         "building:levels": "3",
-        "name": "B",
+        "name": "North Village B",
         "roof:levels": "0"
       }
     },
@@ -55355,7 +55478,7 @@
       "tags": {
         "building": "dormitory",
         "building:levels": "3",
-        "name": "C",
+        "name": "North Village C",
         "nohousenumber": "yes",
         "roof:levels": "0"
       }
@@ -58474,7 +58597,7 @@
       "tags": {
         "addr:housenumber": "K",
         "building": "dormitory",
-        "name": "K"
+        "name": "North Village K"
       }
     },
     {
@@ -65846,6 +65969,7 @@
         3409343833,
         3409343834,
         3409343835,
+        14117731821,
         3409343836,
         3409343837,
         3409343832
@@ -65868,6 +65992,10 @@
           "lon": -82.4368767
         },
         {
+          "lat": 34.9314061,
+          "lon": -82.4369124
+        },
+        {
           "lat": 34.9313682,
           "lon": -82.4369481
         },
@@ -65883,6 +66011,7 @@
       "tags": {
         "area": "yes",
         "highway": "pedestrian",
+        "name": "G-Pavillion",
         "surface": "concrete"
       }
     },
@@ -76704,7 +76833,7 @@
         "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
         "building:levels": "3",
-        "name": "D",
+        "name": "North Village D",
         "roof:levels": "0"
       }
     },
@@ -78282,7 +78411,7 @@
       "tags": {
         "addr:housenumber": "H",
         "building": "dormitory",
-        "name": "H"
+        "name": "North Village H"
       }
     },
     {
@@ -81103,6 +81232,7 @@
       },
       "nodes": [
         736991552,
+        14117751449,
         736991390,
         736991699,
         736992758,
@@ -81116,6 +81246,10 @@
         {
           "lat": 34.9223027,
           "lon": -82.4412216
+        },
+        {
+          "lat": 34.9220218,
+          "lon": -82.4416754
         },
         {
           "lat": 34.9219961,
@@ -81336,7 +81470,7 @@
       "tags": {
         "addr:housenumber": "I",
         "building": "dormitory",
-        "name": "I"
+        "name": "North Village I"
       }
     },
     {
@@ -82632,7 +82766,7 @@
         "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
         "building:levels": "3",
-        "name": "E",
+        "name": "North Village E",
         "roof:levels": "0"
       }
     },
@@ -82813,10 +82947,13 @@
         }
       ],
       "tags": {
+        "alt_name": "Estridge Commons",
         "amenity": "police",
         "building": "yes",
         "check_date": "2026-08-23",
-        "name": "Estridge Commons"
+        "name": "Furman University Police Department",
+        "operator": "Furman University",
+        "short_name": "FUPD"
       }
     },
     {
@@ -85320,7 +85457,7 @@
       "tags": {
         "addr:housenumber": "J",
         "building": "dormitory",
-        "name": "J"
+        "name": "North Village J"
       }
     },
     {
@@ -86053,7 +86190,8 @@
         "addr:postcode": "29613",
         "addr:state": "SC",
         "addr:street": "Furman Lake Lane",
-        "building": "university"
+        "building": "university",
+        "name": "Earle Infirmary"
       }
     },
     {
@@ -87081,8 +87219,9 @@
         "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
         "building:levels": "3",
-        "name": "F",
-        "roof:levels": "0"
+        "name": "North Village F",
+        "roof:levels": "0",
+        "smoking": "no"
       }
     },
     {
@@ -87210,6 +87349,7 @@
         736991673,
         736992738,
         736991641,
+        14117751447,
         736992716,
         736992992,
         736992326,
@@ -87283,6 +87423,10 @@
           "lon": -82.4392760
         },
         {
+          "lat": 34.9212674,
+          "lon": -82.4394819
+        },
+        {
           "lat": 34.9213151,
           "lon": -82.4395421
         },
@@ -87324,7 +87468,8 @@
         }
       ],
       "tags": {
-        "building": "yes"
+        "building": "sports_centre",
+        "name": "Lay Physical Activities Center"
       }
     },
     {
@@ -88264,7 +88409,7 @@
         "addr:street": "3300 Poinsett Highway",
         "building": "dormitory",
         "building:levels": "3",
-        "name": "A",
+        "name": "North Village A",
         "roof:levels": "0"
       }
     },
@@ -88382,7 +88527,8 @@
         }
       ],
       "tags": {
-        "building": "dormitory"
+        "building": "dormitory",
+        "name": "Poteat-McGlothlin Lounge"
       }
     },
     {
@@ -88629,7 +88775,7 @@
       "tags": {
         "addr:housenumber": "G",
         "building": "dormitory",
-        "name": "G"
+        "name": "North Village G"
       }
     },
     {
