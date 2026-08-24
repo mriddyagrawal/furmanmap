@@ -8,7 +8,7 @@
 // Bumped whenever something user-visible changes. GitHub Pages caches for ten
 // minutes, so "it is not there" and "you are looking at an old copy" are easy
 // to confuse — this makes the running version checkable at a glance.
-const BUILD = '2026-08-24 · follow-mode';
+const BUILD = '2026-08-24 · compass';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -56,6 +56,12 @@ async function main() {
     trackUserLocation: true, showUserLocation: true, showAccuracyCircle: true
   });
   map.addControl(state.geo, 'bottom-right');
+  // GeolocateControl.trigger() is a TOGGLE: calling it while tracking is
+  // already active switches it OFF, clearing the watch and the blue dot. Track
+  // the real state so we only ever turn it on.
+  state.geo.on('trackuserlocationstart', () => { state.tracking = true; });
+  state.geo.on('trackuserlocationend', () => { state.tracking = false; });
+
   state.geo.on('geolocate', pos => {
     state.here = [pos.coords.longitude, pos.coords.latitude];
     // trackUserLocation fires this on every GPS update, not just when asked.
@@ -286,6 +292,47 @@ function wireSearch(named) {
   });
 }
 
+/* ---------- compass ---------- */
+
+/* Read the device compass ourselves rather than using maplibre-gl-compass:
+ * that package is a map *control* that sets the bearing itself, which would
+ * fight the camera during navigation. We need the heading as a value to blend
+ * with the route direction, which it does not expose.
+ *
+ * The messy parts it does handle, and so must we: iOS uses a non-standard
+ * webkitCompassHeading and demands permission from a user gesture, Android
+ * uses deviceorientationabsolute, and raw readings jitter by several degrees.
+ */
+function startCompass() {
+  if (state.compassOn) return;
+  const listen = () => {
+    state.compassOn = true;
+    window.addEventListener('deviceorientationabsolute', onOrientation, true);
+    window.addEventListener('deviceorientation', onOrientation, true);
+  };
+  // iOS 13+ gates the sensor behind an explicit prompt from a user gesture.
+  const DOE = window.DeviceOrientationEvent;
+  if (DOE && typeof DOE.requestPermission === 'function') {
+    DOE.requestPermission()
+      .then(r => { if (r === 'granted') listen(); })
+      .catch(() => {});
+  } else if (DOE) {
+    listen();
+  }
+}
+
+function onOrientation(e) {
+  let deg = null;
+  if (typeof e.webkitCompassHeading === 'number') {
+    deg = e.webkitCompassHeading;                 // iOS: already degrees from north
+  } else if (e.absolute && typeof e.alpha === 'number') {
+    deg = 360 - e.alpha;                          // Android: alpha counts the other way
+  }
+  if (deg === null || isNaN(deg)) return;
+  state.heading = smoothHeading(state.heading, deg);
+  if (state.navigating && state.following && state.here) navUpdate(state.here);
+}
+
 /* ---------- follow mode ---------- */
 
 const ARRIVED_M = 15;        // close enough to call it arrived
@@ -302,12 +349,14 @@ function startWalking() {
   $('hint').hidden = true;
   $('nav').hidden = false;
   $('nav-to').textContent = `to ${state.route.to}`;
-  state.geo.trigger();                       // ensure position tracking is on
+  if (!state.tracking) state.geo.trigger();   // only turn it ON, never off
+  startCompass();
   if (state.here) navUpdate(state.here);
 }
 
 function stopWalking() {
   state.navigating = false;
+  state.heading = null;
   $('nav').hidden = true;
   $('hint').hidden = false;
   $('nav').classList.remove('arrived');
@@ -334,7 +383,13 @@ function navUpdate(here, gpsHeading) {
   // GPS heading is null standing still and noisy at walking pace, so fall back
   // to the direction the route goes next. Facing your destination beats
   // spinning with sensor noise.
-  let bearing = (typeof gpsHeading === 'number' && !isNaN(gpsHeading)) ? gpsHeading : null;
+  // Compass first: it is the only source that responds when you turn on the
+  // spot, which is the moment the map most needs to be right. GPS course is the
+  // fallback while moving, and the route direction the fallback for neither.
+  let bearing = state.heading;
+  if (bearing === undefined || bearing === null) {
+    bearing = (typeof gpsHeading === 'number' && !isNaN(gpsHeading)) ? gpsHeading : null;
+  }
   if (bearing === null) {
     bearing = bearingAlongRoute(state.route.line, state.route.total, along);
   }
@@ -344,7 +399,7 @@ function navUpdate(here, gpsHeading) {
     // Large top padding puts the map's centre — and so the blue dot — low on
     // screen, so most of the view is the path ahead rather than behind.
     padding: { top: Math.round(window.innerHeight * 0.45), bottom: 0, left: 0, right: 0 },
-    duration: 900, easing: t => t
+    duration: state.heading != null ? 250 : 900, easing: t => t
   });
 }
 
@@ -368,7 +423,7 @@ function wireControls() {
       return draw();
     }
     hint('Finding you…');
-    state.geo.trigger();          // same control that draws the blue dot
+    if (!state.tracking) state.geo.trigger();   // same control that draws the dot
   };
 
   $('start').onclick = startWalking;

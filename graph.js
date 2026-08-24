@@ -110,6 +110,20 @@ function aStar(g, start, goal, avoidSteps) {
   return { line, metres: len, usesSteps: steps };
 }
 
+/* ---------- heading ---------- */
+
+const HEADING_SMOOTHING = 0.25;      // 0 = frozen, 1 = raw and jumpy
+
+/* Averaging angles naively spins the map at the 359 -> 0 boundary, so smooth
+   the unit vector instead of the number. */
+function smoothHeading(prev, next) {
+  if (prev === undefined || prev === null) return next;
+  const r = Math.PI / 180;
+  const x = Math.cos(prev * r) * (1 - HEADING_SMOOTHING) + Math.cos(next * r) * HEADING_SMOOTHING;
+  const y = Math.sin(prev * r) * (1 - HEADING_SMOOTHING) + Math.sin(next * r) * HEADING_SMOOTHING;
+  return (Math.atan2(y, x) / r + 360) % 360;
+}
+
 /* ---------- progress along a route ---------- */
 
 /* Where along `line` is `here`, how far is left, and how far off-route are we?
@@ -135,5 +149,6 @@ function bearingAlongRoute(line, totalMetres, along) {
 }
 
   return { metres, ringOf, centroid, inRing, buildGraph, aStar, STEP_PENALTY,
-           progressAlong, bearingAlongRoute, turf };
+           progressAlong, bearingAlongRoute, smoothHeading,
+           HEADING_SMOOTHING, turf };
 });

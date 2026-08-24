@@ -190,3 +190,32 @@ test('route bearing points forward, and is stable near the end', () => {
     assert.ok(b >= -180 && b <= 180, `bearing ${b} is a valid compass value`);
   }
 });
+
+/* ---------- compass heading smoothing ---------- */
+
+const { smoothHeading } = require('../graph.js');
+
+test('smoothing crosses the 359/0 boundary without spinning the map', () => {
+  // Naive averaging of 350 and 10 gives 180 — the map would swing right round.
+  const h = smoothHeading(350, 10);
+  assert.ok(h > 350 || h < 20, `350 -> 10 smoothed to ${h.toFixed(1)}, expected near north`);
+  const back = smoothHeading(10, 350);
+  assert.ok(back > 350 || back < 20, `10 -> 350 smoothed to ${back.toFixed(1)}`);
+});
+
+test('smoothing stays in range, starts clean, and converges', () => {
+  assert.strictEqual(smoothHeading(undefined, 90), 90, 'first reading is taken as-is');
+  assert.strictEqual(smoothHeading(null, 42), 42);
+  let h = 0;
+  for (let i = 0; i < 60; i++) {
+    h = smoothHeading(h, 270);
+    assert.ok(h >= 0 && h < 360, `heading ${h} left the valid range`);
+  }
+  assert.ok(Math.abs(h - 270) < 1, `converged to ${h.toFixed(1)}, expected 270`);
+});
+
+test('smoothing damps jitter rather than following it', () => {
+  // A single spurious 90-degree spike must not swing the map 90 degrees.
+  const moved = Math.abs(smoothHeading(0, 90) - 0);
+  assert.ok(moved < 45, `one noisy reading moved the map ${moved.toFixed(1)} degrees`);
+});
