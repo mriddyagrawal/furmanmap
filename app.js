@@ -8,7 +8,7 @@
 // Bumped whenever something user-visible changes. GitHub Pages caches for ten
 // minutes, so "it is not there" and "you are looking at an old copy" are easy
 // to confuse — this makes the running version checkable at a glance.
-const BUILD = '2026-08-24 · heading-arrow';
+const BUILD = '2026-08-24 · arrow-svg';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -416,11 +416,9 @@ function updateCompassUI() {
     return;
   }
   $('compass').classList.add('live');
-  // The arrow glyph points right at rest, so subtract 90 to make 0 mean north.
-  // Then offset by the map's bearing, so it reads correctly whether the map is
-  // north-up or rotated to your heading.
-  arrow.style.transform =
-    `rotate(${state.heading - state.map.getBearing() - 90}deg)`;
+  // The SVG points north at rest, so the only offset needed is the map's own
+  // bearing — which keeps it correct whether the map is north-up or rotated.
+  arrow.style.transform = `rotate(${state.heading - state.map.getBearing()}deg)`;
   $('compass-label').textContent =
     `${cardinal(state.heading)} ${Math.round(state.heading)}\u00B0`;
   $('compass').title = `Facing ${cardinal(state.heading)}, ${Math.round(state.heading)} degrees`;
