@@ -38,12 +38,12 @@ _Survey phase, Aug 2026. Architecture: static single-page app, no backend for v0
 
 - **Nodes are not declared and are not one-per-meter.** OSM already stores each path as an ordered list of coordinates — a point at every bend, and a *shared* point where two paths meet. Those existing vertices *are* the nodes. Furman ≈ a few thousand vertices, a few hundred real junctions. Buildings are not nodes; they get snapped.
 - **Graph build:** walk each way's vertex list, emit an edge per consecutive pair, weight = haversine meters; junctions emerge where ways share a vertex; **keep only the largest connected component** (two sidewalks drawn crossing without a shared vertex look disconnected → "no route found"). ~50 LOC, runs at page load in milliseconds — or free via `geojson-path-finder` (GeoJSON in → routes out).
-- **Routing:** A* (or the lib's Dijkstra). **Accessible mode** = filter/penalize `highway=steps` edges before routing. The whole feature is a filter — it only works once stairs are mapped.
+- **Routing: `ngraph.path` A\*** (16 KB browser build), with our OSM-node-id graph, a straight-line-metres heuristic, and a weight function. Chosen over `geojson-path-finder` after measuring both: they agree to within 0.00 m on real campus routes, but path-finder keys vertices by rounded *coordinate* rather than node id and ships no browser build. **Accessible mode** = a ×12 weight on `highway=steps` edges — a penalty, not a ban, so a stairs-only destination still routes with a warning instead of stranding someone.
 - **Snapping:** destination building → its entrance node if mapped, else nearest graph node to centroid; blue dot → nearest graph node; dashed leader line for the last few meters to the door.
 - **Walk time:** distance ÷ ~80 m/min.
 - **QA tool (not part of the app):** OSMnx (Python, peer-reviewed) — pull Furman's walk network, detect disconnected islands / dead ends *before* building, fix in OSM, re-run. Also the citable methodology reference for fellowship applications.
 
-**v0 dependency count:** MapLibre + Turf + Fuse + ~300 lines of our own code. $0 running cost.
+**v0 dependencies:** MapLibre + Turf + Fuse + ngraph.graph/ngraph.path, all as CDN UMD bundles — no bundler, no build step. Our own code is the OSM-node-id graph build, component filtering, snapping, and UI. $0 running cost.
 
 ## The whole build in one sentence
 

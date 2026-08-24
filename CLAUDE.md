@@ -22,15 +22,35 @@ BBOX=34.924,-82.440,34.925,-82.439 ./scripts/fetch-osm.sh   # small box, for tes
 ```
 
 ```bash
-node --test tests/*.test.js          # router tests (Node's built-in runner)
-python3 -m http.server 8765          # then open http://localhost:8765 — the app
-                                     # fetches data/*.geojson, so file:// will not work
+npm install                          # once — Turf + ngraph, for the Node tests
+npm test                             # router tests (Node's built-in runner)
+npm run serve                        # http://localhost:8765 — the app fetches
+                                     # data/*.geojson, so file:// will not work
+npm run data                         # fetch + build + audit in one go
 ```
 
-Scripts are stdlib-only Python 3 and bash, tests use Node's built-in runner, and
-the app loads MapLibre and Fuse from a CDN — on purpose. There is no install step
-and no build step anywhere in this repo. Keep it that way unless there is a reason
-that survives being written down.
+The data scripts are stdlib-only Python 3 and bash. There is **no build step** — the
+browser loads MapLibre, Fuse, Turf and ngraph as UMD bundles straight from a CDN, and
+`graph.js` resolves those same libraries through `require()` under Node. Same file,
+both environments, no bundler. Keep it that way unless there is a reason that
+survives being written down.
+
+## Prefer a library over writing it
+
+If a maintained library does the job, use it. Other people have already found the
+edge cases, and reviewed code beats clever code. Turf does the geodesy; ngraph.path
+does A*; Fuse does fuzzy search; MapLibre draws.
+
+Write it by hand only when the library genuinely does not fit, and then say why in
+the commit. Two things here meet that bar and are worth knowing before you try to
+replace them:
+
+- **Graph construction is keyed on OSM node ids.** `geojson-path-finder` keys
+  vertices by rounded coordinate string, which quietly merges nodes that are near
+  each other but genuinely unconnected, and hides the near-miss gaps `audit.py`
+  exists to report. It also ships no browser build, so it would force in a bundler.
+- **Largest-connected-component filtering.** No routing library does it, and without
+  it orphan path islands become destinations that are visible but unroutable.
 
 ## Where the code lives
 

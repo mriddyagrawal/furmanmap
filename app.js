@@ -25,6 +25,9 @@ async function main() {
   const walk = paths.features.filter(f => campus(f) && f.properties.walkable);
 
   state.graph = buildGraph(walk);
+  state.nodeIndex = turf.featureCollection(
+    [...state.graph.coord].map(([id, c]) => turf.point(c, { id }))
+  );
 
   // A door is worth routing to; a building's geometric middle usually isn't.
   for (const b of named) {
@@ -107,13 +110,11 @@ function snap(feature) {
   return { node: nearestNode(target), point: target };
 }
 
+// Turf's nearestPoint over a collection built once at load, rather than a
+// linear scan written by hand each time.
 function nearestNode(pt) {
-  let best = null, bd = Infinity;
-  for (const [id, c] of state.graph.coord) {
-    const d = metres(pt, c);
-    if (d < bd) { bd = d; best = id; }
-  }
-  return best;
+  const hit = turf.nearestPoint(turf.point(pt), state.nodeIndex);
+  return hit.properties.id;
 }
 
 function pick(feature) {

@@ -114,11 +114,11 @@ test('A* is optimal — matches Dijkstra on real campus pairs', () => {
       if (done.has(id)) continue;
       done.add(id);
       if (id === goal) return d;
-      for (const e of graph.adj.get(id) || []) {
-        if (!graph.coord.has(e.to)) continue;
-        const nd = d + e.w;
-        if (nd < (dist.get(e.to) ?? Infinity)) { dist.set(e.to, nd); q.push([nd, e.to]); }
-      }
+      graph.graph.forEachLinkedNode(id, (other, link) => {
+        if (!graph.coord.has(other.id)) return;
+        const nd = d + link.data.w;
+        if (nd < (dist.get(other.id) ?? Infinity)) { dist.set(other.id, nd); q.push([nd, other.id]); }
+      });
     }
     return null;
   };
