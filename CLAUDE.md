@@ -21,7 +21,46 @@ python3 scripts/audit.py            # -> data/audit.md (mapper punch list) + dat
 BBOX=34.924,-82.440,34.925,-82.439 ./scripts/fetch-osm.sh   # small box, for testing the pipeline
 ```
 
-Scripts are stdlib-only Python 3 and bash on purpose — CI needs no install step.
+```bash
+npm install                          # once — Turf + ngraph, for the Node tests
+npm test                             # router tests (Node's built-in runner)
+npm run serve                        # http://localhost:8765 — the app fetches
+                                     # data/*.geojson, so file:// will not work
+npm run data                         # fetch + build + audit in one go
+```
+
+The data scripts are stdlib-only Python 3 and bash. There is **no build step** — the
+browser loads MapLibre, Fuse, Turf and ngraph as UMD bundles straight from a CDN, and
+`graph.js` resolves those same libraries through `require()` under Node. Same file,
+both environments, no bundler. Keep it that way unless there is a reason that
+survives being written down.
+
+## Prefer a library over writing it
+
+If a maintained library does the job, use it. Other people have already found the
+edge cases, and reviewed code beats clever code. Turf does the geodesy; ngraph.path
+does A*; Fuse does fuzzy search; MapLibre draws.
+
+Write it by hand only when the library genuinely does not fit, and then say why in
+the commit. Two things here meet that bar and are worth knowing before you try to
+replace them:
+
+- **Graph construction is keyed on OSM node ids.** `geojson-path-finder` keys
+  vertices by rounded coordinate string, which quietly merges nodes that are near
+  each other but genuinely unconnected, and hides the near-miss gaps `audit.py`
+  exists to report. It also ships no browser build, so it would force in a bundler.
+- **Largest-connected-component filtering.** No routing library does it, and without
+  it orphan path islands become destinations that are visible but unroutable.
+
+## Where the code lives
+
+- `graph.js` — routing core: graph build, A*, geometry. Pure functions, no DOM,
+  so it runs in the browser *and* under `node --test`. Put logic here.
+- `app.js` — map, layers, search, UI wiring. DOM-dependent, untested by design.
+- `index.html` / `style.css` — one page.
+
+If you are tempted to put routing logic in `app.js`, don't: that is how the router
+becomes untestable.
 
 ## Architecture invariants
 
@@ -48,6 +87,9 @@ Violating any of these breaks the design, not just the code:
 - The GIS club contributes **through OSM**, never through this repo. Nobody but the
   maintainer commits here. That constraint is what makes a one-person team survivable.
 - Generated data in `data/` **is committed** — that snapshot is what the site serves.
+  The exception is `data/campus.osm.json`, the raw Overpass response: it is a build
+  intermediate the app never loads, and committing 2 MB of it on every weekly
+  refresh would add ~100 MB of history a year. Regenerate with `npm run data`.
 - Keep the app small and readable. This gets handed to a student club eventually;
   cleverness that needs explaining is a liability.
 
