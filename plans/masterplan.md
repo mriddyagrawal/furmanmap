@@ -59,10 +59,10 @@ If that works reliably, v0 is done — regardless of how much else is unbuilt.
 
 | # | Step | Artifact | Status |
 |---|---|---|---|
-| 0.1 | Overpass extract for the campus bbox, with mirror fallback + retries | `scripts/fetch-osm.sh` → `data/campus.osm.json` | Written, first successful run pending (Overpass has been busy) |
+| 0.1 | Overpass extract for the campus bbox, with mirror fallback + retries | `scripts/fetch-osm.sh` → `data/campus.osm.json` (untracked intermediate) | Done |
 | 0.2 | Convert to app-ready GeoJSON, preserving OSM node IDs on paths | `scripts/build-geojson.py` → `data/{buildings,paths,entrances}.geojson` | Written, unrun |
 | 0.3 | Connectivity + completeness audit | `scripts/audit.py` → `data/audit.md`, `data/audit.json` | Written, unrun |
-| 0.4 | Scheduled refresh with anti-vandalism guardrail | `.github/workflows/refresh-osm.yml` | Written, untested in CI |
+| 0.4 | Scheduled refresh with anti-vandalism guardrail | `.github/workflows/refresh-osm.yml` | Written, **still untested in CI** |
 | 0.5 | Clip to Furman's OSM campus boundary; flag features `on_campus` | `data/boundary.geojson` | Done — boundary already existed as an OSM relation |
 | 0.6 | Turn the audit's gap list into the Phase 1 punch list | `data/audit.md` | Done — audit.md *is* the punch list |
 

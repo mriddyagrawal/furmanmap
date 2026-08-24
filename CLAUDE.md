@@ -87,6 +87,9 @@ Violating any of these breaks the design, not just the code:
 - The GIS club contributes **through OSM**, never through this repo. Nobody but the
   maintainer commits here. That constraint is what makes a one-person team survivable.
 - Generated data in `data/` **is committed** — that snapshot is what the site serves.
+  The exception is `data/campus.osm.json`, the raw Overpass response: it is a build
+  intermediate the app never loads, and committing 2 MB of it on every weekly
+  refresh would add ~100 MB of history a year. Regenerate with `npm run data`.
 - Keep the app small and readable. This gets handed to a student club eventually;
   cleverness that needs explaining is a liability.
 
