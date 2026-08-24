@@ -1,153 +1,197 @@
-/* Every colour is a token. Dark mode overrides ONLY the token values, never
- * individual rules — patching rule-by-rule is how the selected chip ended up
- * near-white text on a near-white background.
- */
+/* Every colour is a token. Dark mode overrides token VALUES only — never
+ * individual rules, which is how the old stylesheet ended up with near-white
+ * text on near-white backgrounds. */
 :root {
-  --purple:      #582C83;   /* Furman purple */
-  --purple-dim:  #7a55a3;
-  --ink:         #1c1b22;   /* primary text */
-  --ink-soft:    #5c5768;   /* secondary text */
-  --paper:       #ffffff;   /* panel background */
-  --field:       #f6f5f8;   /* inputs and buttons */
-  --field-hover: #ece8f3;
-  --selected:    #ece4f6;   /* active chip / hovered result */
-  --on-selected: #351a52;   /* text ON --selected — must contrast with it */
-  --line:        #e0dde6;
+  --purple:      #582C83;   /* Furman purple — routes and primary actions */
+  --purple-dim:  #6f3ea3;
+  --ink:         #1c1b22;
+  --ink-soft:    #5c5768;
+  --paper:       #ffffff;   /* cards: search bar, sheet, FABs */
+  --field:       #f1eff5;
+  --field-hover: #e7e3ee;
+  --selected:    #ece4f6;
+  --on-selected: #351a52;
+  --line:        #e4e1ea;
   --warn:        #a3341a;
-  --shadow:      rgba(0, 0, 0, .18);
-  --dot:         #1da1f2;   /* matches MapLibre's own user-location dot */
-  --muted:       #8b8b93;   /* deliberately neutral: the whole palette is
-                               purple-tinted, and an inactive control tinted
+  --dot:         #1da1f2;   /* MapLibre's own user-location blue */
+  --muted:       #8b8b93;   /* deliberately neutral: an inactive control tinted
                                purple reads as a broken active one */
+  --shadow:      0 2px 10px rgba(0,0,0,.16), 0 1px 3px rgba(0,0,0,.10);
 }
-
 @media (prefers-color-scheme: dark) {
   :root {
-    --purple:      #c9a4ea;
-    --purple-dim:  #a887cc;
-    --ink:         #eceaf1;
-    --ink-soft:    #a9a4b6;
-    --paper:       #212027;
-    --field:       #2d2c35;
-    --field-hover: #3a3845;
-    --selected:    #43356b;
-    --on-selected: #f0e8fb;
-    --line:        #3b3946;
-    --warn:        #ff9f7a;
-    --shadow:      rgba(0, 0, 0, .5);
-    --dot:         #4cb8ff;
-    --muted:       #86868f;
+    --purple:      #c9a4ea;  --purple-dim:  #b189d8;
+    --ink:         #eceaf1;  --ink-soft:    #a9a4b6;
+    --paper:       #23222a;  --field:       #2f2e38;  --field-hover: #3b3945;
+    --selected:    #43356b;  --on-selected: #f0e8fb;
+    --line:        #383641;  --warn:        #ff9f7a;
+    --dot:         #4cb8ff;  --muted:       #86868f;
+    --shadow:      0 2px 12px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.4);
   }
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body {
-  margin: 0; height: 100%;
-  font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  margin: 0; height: 100%; overscroll-behavior: none;
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
   color: var(--ink);
 }
 #map { position: absolute; inset: 0; }
 
-#panel {
-  position: absolute; z-index: 2;
-  top: max(12px, env(safe-area-inset-top)); left: 12px;
-  width: min(340px, calc(100vw - 24px));
-  background: var(--paper); border-radius: 14px;
-  box-shadow: 0 6px 24px var(--shadow);
-  padding: 10px; display: flex; flex-direction: column; gap: 8px;
+.icon {
+  width: 20px; height: 20px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
 }
 
-.row { display: flex; gap: 8px; }
+/* ---------- top ---------- */
+
+#top {
+  position: absolute; z-index: 3;
+  top: max(10px, env(safe-area-inset-top)); left: 10px; right: 10px;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;                       /* the map stays draggable between cards */
+}
+#top > * { pointer-events: auto; }
+
+#searchbar {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--paper); border-radius: 26px; padding: 0 14px; height: 48px;
+  box-shadow: var(--shadow); color: var(--ink-soft);
+}
+#searchbar .icon { color: var(--ink-soft); }
 #q {
-  flex: 1; min-width: 0; padding: 10px 12px;
-  font-size: 16px;                 /* 16px or smaller makes iOS zoom on focus */
-  border: 1px solid var(--line); border-radius: 10px;
-  background: var(--field); color: var(--ink);
+  flex: 1; min-width: 0; border: 0; background: none; color: var(--ink);
+  font-size: 16px;                            /* 16px or larger, or iOS zooms on focus */
 }
-#q::placeholder { color: var(--ink-soft); }
-#q:focus {
-  outline: 2px solid var(--purple); outline-offset: 1px;
-  background: var(--paper); color: var(--ink);
+#q:focus { outline: none; }
+#q::placeholder { color: var(--muted); }
+
+.iconbtn {
+  display: grid; place-items: center; width: 34px; height: 34px; flex: none;
+  border: 0; border-radius: 50%; background: none; color: var(--ink-soft); cursor: pointer;
+}
+.iconbtn:hover { background: var(--field); }
+
+#suggest {
+  list-style: none; margin: 0; padding: 6px;
+  background: var(--paper); border-radius: 14px; box-shadow: var(--shadow);
+  max-height: 46dvh; overflow-y: auto;
+}
+#suggest li {
+  display: flex; align-items: baseline; gap: 4px; flex-direction: column;
+  padding: 10px 12px; border-radius: 10px; cursor: pointer;
+}
+#suggest li:hover, #suggest li[aria-selected="true"] { background: var(--selected); color: var(--on-selected); }
+#suggest .sub { margin: 0; }
+
+#endpoints {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--paper); border-radius: 16px; padding: 8px; box-shadow: var(--shadow);
+}
+#endpoints .fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.field {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  border: 0; background: var(--field); border-radius: 10px;
+  padding: 10px 12px; font-size: 15px; color: var(--ink);
+  text-align: left; cursor: pointer;
+}
+.field span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.field:hover { background: var(--field-hover); }
+.field[data-editing="true"] { box-shadow: inset 0 0 0 2px var(--purple); }
+.pip { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.pip.from { background: var(--dot); }
+.pip.to   { background: var(--purple); }
+
+/* ---------- floating buttons ---------- */
+
+#fabs {
+  position: absolute; z-index: 3; right: 12px;
+  bottom: calc(var(--sheet-h, 0px) + 16px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 10px;
+  transition: bottom .18s ease;
+}
+.fab {
+  display: grid; place-items: center; width: 46px; height: 46px;
+  border: 0; border-radius: 50%; background: var(--paper);
+  box-shadow: var(--shadow); color: var(--ink-soft); cursor: pointer;
+}
+.fab:hover { background: var(--field); }
+.fab.live { color: var(--dot); }
+#fab-arrow { color: var(--muted); }
+.fab.live #fab-arrow { color: var(--dot); }
+#fab-locate.tracking { color: var(--dot); }
+
+/* ---------- bottom sheet ---------- */
+
+#sheet {
+  position: absolute; z-index: 4; left: 0; right: 0; bottom: 0;
+  background: var(--paper);
+  border-radius: 18px 18px 0 0; box-shadow: var(--shadow);
+  padding: 6px 16px calc(16px + env(safe-area-inset-bottom));
+  transform: translateY(101%); transition: transform .22s cubic-bezier(.2,.8,.2,1);
+}
+body[data-mode="place"] #sheet,
+body[data-mode="directions"] #sheet,
+body[data-mode="nav"] #sheet { transform: translateY(0); }
+
+#grip {
+  width: 38px; height: 4px; border-radius: 2px; background: var(--line);
+  margin: 4px auto 10px;
 }
 
-button {
+.pane { display: none; flex-direction: column; gap: 10px; }
+body[data-mode="place"]      .pane-place { display: flex; }
+body[data-mode="directions"] .pane-dir   { display: flex; }
+body[data-mode="nav"]        .pane-nav   { display: flex; }
+
+#sheet h2 { margin: 0; font-size: 20px; line-height: 1.25; }
+.sub { margin: 0; font-size: 13px; color: var(--ink-soft); }
+.sub.warn { color: var(--warn); }
+.figure { margin: 0; display: flex; align-items: baseline; gap: 8px; }
+.figure strong { font-size: 26px; color: var(--purple); letter-spacing: -.01em; }
+.figure span { color: var(--ink-soft); font-size: 14px; }
+
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 46px; border-radius: 24px; cursor: pointer;
   border: 1px solid var(--line); background: var(--field); color: var(--ink);
-  border-radius: 10px; padding: 10px 12px; font-size: 15px; cursor: pointer;
+  font-size: 16px; font-weight: 600;
 }
-button:hover { background: var(--field-hover); }
-button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
-#locate { font-size: 18px; line-height: 1; }
+.btn:hover { background: var(--field-hover); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:disabled:hover { background: var(--field); }
+.btn.primary { background: var(--purple); border-color: var(--purple); color: var(--paper); }
+.btn.primary:hover { background: var(--purple-dim); border-color: var(--purple-dim); }
+.btn .icon { width: 18px; height: 18px; }
 
-#compass {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 15px; line-height: 1; padding: 10px 10px;
-}
-#compass-label { font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
-#compass.live #compass-label { color: var(--dot); }
-/* A real SVG rather than a rotated text glyph: a character's shape, baseline
- * and rest orientation vary by font, which is why the arrow looked wrong and
- * needed a 90-degree correction. This points north at rest, everywhere. */
-#compass-arrow { display: block; fill: var(--muted); transform: rotate(0deg); }
-#compass.live #compass-arrow { fill: var(--dot); }
+.toggle { display: flex; align-items: center; gap: 9px; font-size: 15px; }
+.toggle input { accent-color: var(--purple); width: 18px; height: 18px; }
 
-/* Cone on the blue dot showing which way you are facing.
- *
- * A square box centred on the dot, with the triangle drawn at its top edge.
- * Rotating the box therefore swings the triangle around the dot. Rotating a
- * bare triangle instead — which is what this did first — spins it about its
- * own centre and drifts it off the dot. */
+#build { margin: 10px 0 0; font-size: 10.5px; color: var(--muted); text-align: center; }
+
+/* ---------- mode visibility ---------- */
+
+body[data-mode="directions"] #searchbar,
+body[data-mode="nav"]        #searchbar,
+body[data-mode="directions"] #suggest,
+body[data-mode="nav"]        #suggest { display: none; }
+body[data-mode="browse"] #endpoints,
+body[data-mode="place"]  #endpoints { display: none; }
+/* Navigating: keep the endpoints visible but out of the way of the road ahead. */
+body[data-mode="nav"] #endpoints { opacity: .96; }
+
+/* Heading cone: a square box centred on the dot with the triangle at its top
+ * edge, so rotating the box swings the triangle AROUND the dot. Rotating a bare
+ * triangle spins it about its own centre and drifts it off. */
 .heading-cone {
-  width: 56px; height: 56px;
+  width: 56px; height: 56px; pointer-events: none;
   display: flex; justify-content: center; align-items: flex-start;
-  pointer-events: none;
 }
 .heading-cone::before {
   content: ""; width: 0; height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 17px solid var(--dot);
-  opacity: .8;
+  border-left: 8px solid transparent; border-right: 8px solid transparent;
+  border-bottom: 17px solid var(--dot); opacity: .8;
 }
 
-#results { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow-y: auto; }
-#results li { padding: 9px 10px; border-radius: 8px; cursor: pointer; color: var(--ink); }
-#results li:hover,
-#results li[aria-selected="true"] { background: var(--selected); color: var(--on-selected); }
-#results li:hover .kind,
-#results li[aria-selected="true"] .kind { color: var(--on-selected); opacity: .75; }
-#results .kind { color: var(--ink-soft); font-size: 12.5px; }
-
-#route {
-  border-top: 1px solid var(--line); padding-top: 8px;
-  display: flex; flex-direction: column; gap: 8px;
-}
-.ends { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.end {
-  padding: 4px 10px; font-size: 14px; font-weight: 600; border-radius: 8px;
-  max-width: 44%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.end[data-editing="true"] {
-  background: var(--selected); color: var(--on-selected);
-  border-color: var(--purple);
-}
-.swap { padding: 4px 8px; font-size: 14px; line-height: 1.1; border-radius: 8px; }
-
-.eta { display: flex; gap: 8px; align-items: baseline; }
-.eta strong { font-size: 22px; color: var(--purple); }
-.eta span { color: var(--ink-soft); }
-.stepfree { display: flex; gap: 7px; align-items: center; color: var(--ink); }
-.stepfree input { accent-color: var(--purple); }
-#hint { margin: 0; color: var(--ink-soft); font-size: 13px; }
-.actions { display: flex; gap: 8px; }
-.actions button { flex: 1; }
-button.primary {
-  background: var(--purple); border-color: var(--purple);
-  color: var(--paper); font-weight: 600;
-}
-button.primary:hover { background: var(--purple-dim); border-color: var(--purple-dim); }
-#nav { display: flex; flex-direction: column; gap: 8px; }
-#nav-to { font-weight: 600; }
-#nav-note { margin: 0; font-size: 13px; color: var(--ink-soft); }
-#nav.arrived .eta strong { color: var(--purple); }
-.warn { color: var(--warn); }
-#build { margin: 0; font-size: 11px; color: var(--ink-soft); opacity: .65; }
+.maplibregl-ctrl-bottom-right { display: none; }   /* our own FABs replace these */

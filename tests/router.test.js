@@ -169,15 +169,29 @@ test('walking a real campus route counts down to zero', () => {
   assert.ok(end.left < 1, `arriving leaves ${end.left.toFixed(1)} m, expected ~0`);
 });
 
-test('stepping off the route is measured in metres, not kilometres', () => {
-  // The classic Turf mistake: nearestPointOnLine defaults to kilometres, which
-  // would report a 50 m detour as 0.05 and never trigger the off-route notice.
+test('off-route distance is metres, not kilometres', () => {
+  // Turf's nearestPointOnLine defaults to KILOMETRES. If that default leaked
+  // through, a 50 m detour would report as 0.05 and the off-route warning could
+  // never fire. This test exists for that one digit.
+  //
+  // It deliberately asserts only a lower bound. nearestPointOnLine measures to
+  // the whole line, and campus paths wind enough that a point 50 m to one side
+  // can be genuinely close to another stretch of the same route — an earlier
+  // version of this test asserted an upper bound and broke on an OSM edit that
+  // reshaped the path, which told us nothing about units.
   const route = aStar(graph, nodeFor('riley'), nodeFor('duke'), false);
   const line = turf.lineString(route.line);
-  const mid = turf.along(line, route.metres / 2, { units: 'meters' });
-  const aside = turf.destination(mid, 50, 90, { units: 'meters' }).geometry.coordinates;
-  const p = progressAlong(line, route.metres, aside);
-  assert.ok(p.offBy > 35 && p.offBy < 65, `50 m aside reads as ${p.offBy.toFixed(1)}`);
+  const half = route.metres / 2;
+  const mid = turf.along(line, half, { units: 'meters' });
+
+  const onLine = progressAlong(line, route.metres, mid.geometry.coordinates);
+  assert.ok(onLine.offBy < 1, `a point on the line reads ${onLine.offBy.toFixed(2)} off`);
+
+  const perpendicular = bearingAlongRoute(line, route.metres, half) + 90;
+  const aside = turf.destination(mid, 50, perpendicular, { units: 'meters' }).geometry.coordinates;
+  const off = progressAlong(line, route.metres, aside).offBy;
+  assert.ok(off > 10, `50 m aside reads as ${off.toFixed(2)} — kilometres would give ~0.05`);
+  assert.ok(off < 200, `${off.toFixed(1)} is implausibly large for a 50 m step`);
 });
 
 test('route bearing points forward, and is stable near the end', () => {
