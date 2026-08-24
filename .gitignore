@@ -217,11 +217,46 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Transient Overpass fetch log (see scripts/fetch-osm.sh)
-data/.fetch.log
-
-# macOS
-.DS_Store
+# ---------------------------------------------------------------------------
+# Furman Wayfinder
+#
+# Everything above this line is GitHub's generic Python template and is mostly
+# irrelevant here — this repo is a static site plus three stdlib Python scripts.
+# Rules below are the ones this project actually needs.
+#
+# NOTE: data/*.geojson, data/audit.* and data/campus.osm.json are deliberately
+# COMMITTED. That snapshot is what the site serves; the refresh job updates it.
+# ---------------------------------------------------------------------------
 
 # Node
 node_modules/
+.npm/
+npm-debug.log*
+coverage/
+playwright-report/
+test-results/
+
+# Secrets — .env is covered above, the variants are not
+.env.*
+!.env.example
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Merge and patch leftovers
+*.orig
+*.rej
+
+# Transient Overpass fetch log (see scripts/fetch-osm.sh)
+data/.fetch.log
+data/*.tmp
