@@ -22,12 +22,21 @@ BBOX=34.924,-82.440,34.925,-82.439 ./scripts/fetch-osm.sh   # small box, for tes
 ```
 
 ```bash
-npm install                          # once — Turf + ngraph, for the Node tests
-npm test                             # router tests (Node's built-in runner)
+npm install                          # once — Turf + ngraph, plus Playwright
+npx playwright install chromium      # once — the browser the E2E tests drive
+npm test                             # router unit tests (graph.js)
+npm run test:e2e                     # browser tests (app.js): flow, a11y, budgets
+npm run test:all                     # both
 npm run serve                        # http://localhost:8765 — the app fetches
                                      # data/*.geojson, so file:// will not work
 npm run data                         # fetch + build + audit in one go
 ```
+
+**What each layer is for.** `tests/*.test.js` covers `graph.js` under Node — routing,
+geometry, progress, heading. `tests/e2e/` drives a real browser against the real site,
+because every UI bug this project has shipped lived in `app.js`: invisible dark-mode
+text, an unreachable button, a vanishing blue dot. If you change `app.js`, the browser
+tests are the ones that matter.
 
 The data scripts are stdlib-only Python 3 and bash. There is **no build step** — the
 browser loads MapLibre, Fuse, Turf and ngraph as UMD bundles straight from a CDN, and

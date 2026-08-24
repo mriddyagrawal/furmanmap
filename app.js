@@ -106,6 +106,7 @@ async function main() {
 
   map.on('load', () => {
     addLayers(map, buildings, boundary);
+    flushPending();
     map.on('click', 'buildings-fill', e => {
       const f = state.places.find(b => b.id === e.features[0].id);
       if (f) selectPlace(f, { fly: false });
@@ -128,6 +129,21 @@ async function main() {
 }
 
 const empty = () => ({ type: 'FeatureCollection', features: [] });
+
+/* Sources exist only after the map's `load` event. Writing to one before then
+   throws, and an exception mid-handler silently abandons everything after it —
+   which is how tapping a search result during load did nothing at all. */
+function setSource(name, data) {
+  const src = state.map && state.map.getSource && state.map.getSource(name);
+  if (src) src.setData(data);
+  else (state.pending ||= new Map()).set(name, data);   // replay once loaded
+}
+
+function flushPending() {
+  if (!state.pending) return;
+  for (const [name, data] of state.pending) setSource(name, data);
+  state.pending = null;
+}
 
 function addLayers(map, buildings, boundary) {
   map.addSource('boundary', { type: 'geojson', data: boundary });
@@ -211,11 +227,11 @@ function selectPlace(feature, { fly }) {
   const p = feature.properties;
   const kind = p.amenity || (p.building && p.building !== 'yes' ? p.building : 'building');
   $('p-kind').textContent = String(kind).replace(/_/g, ' ');
-  const c = centroid(feature.geometry);
-  state.map.getSource('pin').setData(turf.point(c));
-  if (fly) state.map.flyTo({ center: c, zoom: 17, duration: 700 });
   setMode('place');
   showPlaceEta();
+  const c = centroid(feature.geometry);
+  setSource('pin', turf.point(c));
+  if (fly && state.map.loaded()) state.map.flyTo({ center: c, zoom: 17, duration: 700 });
 }
 
 /* Distance and time straight away if we know where the user is; a dash if not,
@@ -289,8 +305,8 @@ function route() {
   state.route = r ? { line: turf.lineString(r.line), total: r.metres, to: nameOf(state.to) } : null;
 
   if (!r) {
-    map.getSource('route').setData(empty());
-    map.getSource('leader').setData(empty());
+    setSource('route', empty());
+    setSource('leader', empty());
     $('d-eta').innerHTML = '<strong>—</strong><span>pick both ends</span>';
     $('d-note').textContent = '';
     $('d-go').disabled = true;
@@ -301,14 +317,14 @@ function route() {
     ? 'No fully step-free route exists — this one still uses stairs.' : '';
   $('d-go').disabled = false;
 
-  map.getSource('route').setData(state.route.line);
-  map.getSource('leader').setData({ type: 'FeatureCollection', features: [
+  setSource('route', state.route.line);
+  setSource('leader', { type: 'FeatureCollection', features: [
     leg(r.a.point, r.line[0]), leg(r.line[r.line.length - 1], r.b.point)] });
-  map.getSource('pin').setData(empty());
+  setSource('pin', empty());
 
   const bb = r.line.concat([r.a.point, r.b.point])
     .reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(r.a.point, r.a.point));
-  map.fitBounds(bb, {
+  if (map.loaded()) map.fitBounds(bb, {
     padding: { top: 150, bottom: Math.max(160, $('sheet').offsetHeight + 30), left: 40, right: 40 },
     maxZoom: 17.5, duration: 700
   });
@@ -454,8 +470,8 @@ function wireControls() {
 
   $('dir-back').onclick = () => {
     if (state.mode === 'nav') return stopNav();
-    state.map.getSource('route').setData(empty());
-    state.map.getSource('leader').setData(empty());
+    setSource('route', empty());
+    setSource('leader', empty());
     setMode(state.to ? 'place' : 'browse');
     if (state.to) selectPlace(state.to, { fly: false });
   };
@@ -508,6 +524,10 @@ function wireControls() {
     });
   }
 }
+
+// Test hook. The site is static and public, so there is nothing to protect
+// here, and asserting on real map sources beats scraping pixels.
+window.__wayfinder = state;
 
 main().catch(e => {
   $('p-name').textContent = 'Could not load campus data';

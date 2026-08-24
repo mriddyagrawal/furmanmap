@@ -14,8 +14,10 @@
   --line:        #e4e1ea;
   --warn:        #a3341a;
   --dot:         #1da1f2;   /* MapLibre's own user-location blue */
-  --muted:       #8b8b93;   /* deliberately neutral: an inactive control tinted
-                               purple reads as a broken active one */
+  --muted:       #71717a;   /* deliberately neutral — an inactive control tinted
+                               purple reads as a broken active one — and dark
+                               enough to clear 4.5:1 on --paper, since it is
+                               used for real text, not only for icons */
   --shadow:      0 2px 10px rgba(0,0,0,.16), 0 1px 3px rgba(0,0,0,.10);
 }
 @media (prefers-color-scheme: dark) {
@@ -25,7 +27,7 @@
     --paper:       #23222a;  --field:       #2f2e38;  --field-hover: #3b3945;
     --selected:    #43356b;  --on-selected: #f0e8fb;
     --line:        #383641;  --warn:        #ff9f7a;
-    --dot:         #4cb8ff;  --muted:       #86868f;
+    --dot:         #4cb8ff;  --muted:       #9a9aa4;
     --shadow:      0 2px 12px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.4);
   }
 }
