@@ -8,7 +8,7 @@
 // Bumped whenever something user-visible changes. GitHub Pages caches for ten
 // minutes, so "it is not there" and "you are looking at an old copy" are easy
 // to confuse — this makes the running version checkable at a glance.
-const BUILD = '2026-08-24 · fast-fix';
+const BUILD = '2026-08-24 · heading-arrow';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -405,15 +405,25 @@ function updateHeadingMarker() {
   state.headingMarker.setLngLat(state.here).setRotation(state.heading);
 }
 
+const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const cardinal = deg => CARDINALS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+
 function updateCompassUI() {
   const arrow = $('compass-arrow');
   if (!arrow) return;
-  if (state.heading == null) { $('compass').hidden = false; return; }
-  $('compass').hidden = false;
+  if (state.heading == null) {
+    $('compass-label').textContent = 'compass';
+    return;
+  }
   $('compass').classList.add('live');
-  // Point where the user faces, relative to whichever way the map is turned.
-  arrow.style.transform = `rotate(${state.heading - state.map.getBearing()}deg)`;
-  $('compass').title = `Facing ${Math.round(state.heading)}\u00B0`;
+  // The arrow glyph points right at rest, so subtract 90 to make 0 mean north.
+  // Then offset by the map's bearing, so it reads correctly whether the map is
+  // north-up or rotated to your heading.
+  arrow.style.transform =
+    `rotate(${state.heading - state.map.getBearing() - 90}deg)`;
+  $('compass-label').textContent =
+    `${cardinal(state.heading)} ${Math.round(state.heading)}\u00B0`;
+  $('compass').title = `Facing ${cardinal(state.heading)}, ${Math.round(state.heading)} degrees`;
   updateHeadingMarker();
 }
 

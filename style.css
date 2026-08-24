@@ -72,7 +72,11 @@ button:hover { background: var(--field-hover); }
 button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
 #locate { font-size: 18px; line-height: 1; }
 
-#compass { font-size: 16px; line-height: 1; padding: 10px 11px; }
+#compass {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 15px; line-height: 1; padding: 10px 10px;
+}
+#compass-label { font-size: 12px; font-weight: 600; letter-spacing: .02em; }
 #compass-arrow {
   display: inline-block; transform: rotate(0deg);
   transition: transform .12s linear;      /* the rAF loop already smooths; this
@@ -81,16 +85,23 @@ button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
 }
 #compass.live #compass-arrow { color: var(--purple); }
 
-/* Cone on the blue dot showing which way you are facing. */
+/* Cone on the blue dot showing which way you are facing.
+ *
+ * A square box centred on the dot, with the triangle drawn at its top edge.
+ * Rotating the box therefore swings the triangle around the dot. Rotating a
+ * bare triangle instead — which is what this did first — spins it about its
+ * own centre and drifts it off the dot. */
 .heading-cone {
-  width: 0; height: 0;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-bottom: 22px solid var(--purple);
-  opacity: .55;
-  transform-origin: 50% 100%;
-  margin-bottom: 26px;                    /* sit above the dot, not on it */
+  width: 56px; height: 56px;
+  display: flex; justify-content: center; align-items: flex-start;
   pointer-events: none;
+}
+.heading-cone::before {
+  content: ""; width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 17px solid var(--purple);
+  opacity: .65;
 }
 
 #results { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow-y: auto; }
