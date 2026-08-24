@@ -110,5 +110,30 @@ function aStar(g, start, goal, avoidSteps) {
   return { line, metres: len, usesSteps: steps };
 }
 
-  return { metres, ringOf, centroid, inRing, buildGraph, aStar, STEP_PENALTY };
+/* ---------- progress along a route ---------- */
+
+/* Where along `line` is `here`, how far is left, and how far off-route are we?
+ * Kept here rather than in app.js so a unit mistake — metres vs kilometres is
+ * the classic one with Turf — fails a test instead of quietly halving an ETA.
+ */
+function progressAlong(line, totalMetres, here) {
+  const snapped = turf.nearestPointOnLine(line, turf.point(here), { units: 'meters' });
+  const along = snapped.properties.location;
+  return {
+    along,
+    offBy: snapped.properties.dist,
+    left: Math.max(0, totalMetres - along)
+  };
+}
+
+/* Direction the route runs from this point onward — used to orient the map when
+ * GPS gives no heading, which is always the case standing still. */
+function bearingAlongRoute(line, totalMetres, along) {
+  const a = turf.along(line, Math.max(0, Math.min(along, totalMetres - 1)), { units: 'meters' });
+  const b = turf.along(line, Math.min(along + 25, totalMetres), { units: 'meters' });
+  return turf.bearing(a, b);
+}
+
+  return { metres, ringOf, centroid, inRing, buildGraph, aStar, STEP_PENALTY,
+           progressAlong, bearingAlongRoute, turf };
 });

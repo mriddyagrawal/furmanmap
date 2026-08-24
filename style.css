@@ -101,4 +101,15 @@ button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
 .stepfree { display: flex; gap: 7px; align-items: center; color: var(--ink); }
 .stepfree input { accent-color: var(--purple); }
 #hint { margin: 0; color: var(--ink-soft); font-size: 13px; }
+.actions { display: flex; gap: 8px; }
+.actions button { flex: 1; }
+button.primary {
+  background: var(--purple); border-color: var(--purple);
+  color: var(--paper); font-weight: 600;
+}
+button.primary:hover { background: var(--purple-dim); border-color: var(--purple-dim); }
+#nav { display: flex; flex-direction: column; gap: 8px; }
+#nav-to { font-weight: 600; }
+#nav-note { margin: 0; font-size: 13px; color: var(--ink-soft); }
+#nav.arrived .eta strong { color: var(--purple); }
 .warn { color: var(--warn); }

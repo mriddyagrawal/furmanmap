@@ -145,3 +145,48 @@ test('golden routes stay plausible for a walkable campus', () => {
     assert.ok(r.metres > 20 && r.metres < 3000, `${a} -> ${b} is ${Math.round(r.metres)} m`);
   }
 });
+
+/* ---------- follow mode: progress along a route ---------- */
+
+const { progressAlong, bearingAlongRoute, turf } = require('../graph.js');
+
+test('walking a real campus route counts down to zero', () => {
+  const route = aStar(graph, nodeFor('riley'), nodeFor('duke'), false);
+  const line = turf.lineString(route.line);
+  const total = route.metres;
+
+  // Simulate walking it: sample positions along the line every 10 m.
+  let prevLeft = Infinity;
+  for (let d = 0; d <= total; d += 10) {
+    const at = turf.along(line, d, { units: 'meters' }).geometry.coordinates;
+    const p = progressAlong(line, total, at);
+    assert.ok(p.offBy < 1, `on the line, off by ${p.offBy.toFixed(1)} m`);
+    assert.ok(p.left <= prevLeft + 0.5, 'remaining distance never grows while walking forward');
+    assert.ok(Math.abs(p.along - d) < 1.5, `at ${d} m the position reads ${p.along.toFixed(1)} m`);
+    prevLeft = p.left;
+  }
+  const end = progressAlong(line, total, route.line[route.line.length - 1]);
+  assert.ok(end.left < 1, `arriving leaves ${end.left.toFixed(1)} m, expected ~0`);
+});
+
+test('stepping off the route is measured in metres, not kilometres', () => {
+  // The classic Turf mistake: nearestPointOnLine defaults to kilometres, which
+  // would report a 50 m detour as 0.05 and never trigger the off-route notice.
+  const route = aStar(graph, nodeFor('riley'), nodeFor('duke'), false);
+  const line = turf.lineString(route.line);
+  const mid = turf.along(line, route.metres / 2, { units: 'meters' });
+  const aside = turf.destination(mid, 50, 90, { units: 'meters' }).geometry.coordinates;
+  const p = progressAlong(line, route.metres, aside);
+  assert.ok(p.offBy > 35 && p.offBy < 65, `50 m aside reads as ${p.offBy.toFixed(1)}`);
+});
+
+test('route bearing points forward, and is stable near the end', () => {
+  const route = aStar(graph, nodeFor('riley'), nodeFor('trone'), false);
+  const line = turf.lineString(route.line);
+  const total = route.metres;
+  for (const at of [0, total / 2, total - 5, total]) {
+    const b = bearingAlongRoute(line, total, at);
+    assert.ok(Number.isFinite(b), `bearing at ${at.toFixed(0)} m is ${b}`);
+    assert.ok(b >= -180 && b <= 180, `bearing ${b} is a valid compass value`);
+  }
+});

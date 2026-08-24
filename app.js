@@ -56,6 +56,7 @@ async function main() {
     // trackUserLocation fires this on every GPS update, not just when asked.
     // Only adopt it as the route origin if the user actually requested that,
     // or a position tick a second later silently overwrites a chosen A -> B.
+    if (state.navigating) return navUpdate(state.here, pos.coords.heading);
     if (!state.followMe) return;
     state.from = { name: 'My location', point: state.here };
     hint('');
@@ -119,6 +120,7 @@ async function main() {
   wireSearch(named);
   wireControls();
   setEditing('to');
+  $('start').disabled = true;
 }
 
 const empty = () => ({ type: 'FeatureCollection', features: [] });
@@ -227,10 +229,13 @@ function draw() {
   $('dist').textContent = `${Math.round(r.metres)} m` +
     (avoid && r.usesSteps ? ' · no step-free route available' : '');
 
-  map.getSource('route').setData({
-    type: 'Feature', properties: {},
-    geometry: { type: 'LineString', coordinates: r.line }
-  });
+  state.route = {
+    line: turf.lineString(r.line),
+    total: r.metres,
+    to: label(state.to)
+  };
+  $('start').disabled = false;
+  map.getSource('route').setData(state.route.line);
   map.getSource('leader').setData({
     type: 'FeatureCollection', features: [
       leg(a.point, r.line[0]), leg(r.line[r.line.length - 1], b.point)
@@ -273,6 +278,68 @@ function wireSearch(named) {
   });
 }
 
+/* ---------- follow mode ---------- */
+
+const ARRIVED_M = 15;        // close enough to call it arrived
+const OFF_ROUTE_M = 40;      // far enough to say so, without rerouting
+
+function startWalking() {
+  if (!state.route) return;
+  if (!window.isSecureContext) {
+    return hint('Walking mode needs an https:// address.', true);
+  }
+  state.navigating = true;
+  state.following = true;
+  $('route').hidden = true;
+  $('hint').hidden = true;
+  $('nav').hidden = false;
+  $('nav-to').textContent = `to ${state.route.to}`;
+  state.geo.trigger();                       // ensure position tracking is on
+  if (state.here) navUpdate(state.here);
+}
+
+function stopWalking() {
+  state.navigating = false;
+  $('nav').hidden = true;
+  $('hint').hidden = false;
+  $('nav').classList.remove('arrived');
+  $('route').hidden = !(state.from || state.to);
+  state.map.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 },
+                     duration: 600 });
+}
+
+/* Where along the route are we, and which way are we heading? */
+function navUpdate(here, gpsHeading) {
+  if (!state.navigating || !state.route) return;
+  const { along, offBy, left } = progressAlong(state.route.line, state.route.total, here);
+
+  const mins = Math.max(1, Math.round(left / WALK_M_PER_MIN));
+  $('nav-mins').textContent = left < ARRIVED_M ? 'Arrived' : `${mins} min`;
+  $('nav-dist').textContent = left < ARRIVED_M ? '' : `${Math.round(left)} m left`;
+  $('nav').classList.toggle('arrived', left < ARRIVED_M);
+  $('nav-note').textContent = offBy > OFF_ROUTE_M
+    ? `You are about ${Math.round(offBy)} m off the route — Stop and pick a new one.`
+    : '';
+
+  if (!state.following) return;
+
+  // GPS heading is null standing still and noisy at walking pace, so fall back
+  // to the direction the route goes next. Facing your destination beats
+  // spinning with sensor noise.
+  let bearing = (typeof gpsHeading === 'number' && !isNaN(gpsHeading)) ? gpsHeading : null;
+  if (bearing === null) {
+    bearing = bearingAlongRoute(state.route.line, state.route.total, along);
+  }
+
+  state.map.easeTo({
+    center: here, zoom: 18, pitch: 55, bearing,
+    // Large top padding puts the map's centre — and so the blue dot — low on
+    // screen, so most of the view is the path ahead rather than behind.
+    padding: { top: Math.round(window.innerHeight * 0.45), bottom: 0, left: 0, right: 0 },
+    duration: 900, easing: t => t
+  });
+}
+
 function wireControls() {
   $('stepfree').onchange = draw;
   $('clear').onclick = () => {
@@ -280,6 +347,8 @@ function wireControls() {
     $('route').hidden = true;
     state.map.getSource('route').setData(empty());
     state.map.getSource('leader').setData(empty());
+    state.route = null;
+    $('start').disabled = true;
   };
   $('locate').onclick = () => {
     if (!window.isSecureContext) {
@@ -293,6 +362,24 @@ function wireControls() {
     hint('Finding you…');
     state.geo.trigger();          // same control that draws the blue dot
   };
+
+  $('start').onclick = startWalking;
+  $('stop').onclick = stopWalking;
+  $('recenter').onclick = () => {
+    state.following = true;
+    $('recenter').hidden = true;
+    if (state.here) navUpdate(state.here);
+  };
+
+  // Any deliberate pan, zoom or rotate drops out of follow mode. Fighting the
+  // camera while trying to look at something is the worst part of nav UIs.
+  for (const ev of ['dragstart', 'rotatestart', 'zoomstart', 'pitchstart']) {
+    state.map.on(ev, e => {
+      if (!state.navigating || !e.originalEvent || !state.following) return;
+      state.following = false;
+      $('recenter').hidden = false;
+    });
+  }
 
   $('from').onclick = () => { setEditing('from'); $('q').focus(); };
   $('to').onclick = () => { setEditing('to'); $('q').focus(); };
