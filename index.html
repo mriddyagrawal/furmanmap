@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Furman Wayfinder</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="map"></div>
+
+<div id="panel">
+  <div class="row">
+    <input id="q" type="search" placeholder="Search a building…" autocomplete="off"
+           aria-label="Search for a building">
+    <button id="locate" title="Route from my location" aria-label="Route from my location">◎</button>
+  </div>
+  <ul id="results" role="listbox" hidden></ul>
+
+  <div id="route" hidden>
+    <div class="ends">
+      <span id="from">—</span>
+      <span class="arrow">→</span>
+      <span id="to">—</span>
+    </div>
+    <div class="eta"><strong id="mins"></strong><span id="dist"></span></div>
+    <label class="stepfree">
+      <input type="checkbox" id="stepfree"> Avoid stairs
+    </label>
+    <button id="clear">Clear</button>
+  </div>
+
+  <p id="hint">Tap any building to set a destination.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/fuse.js@7.0.0/dist/fuse.min.js"></script>
+<script src="graph.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

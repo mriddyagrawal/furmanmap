@@ -1,0 +1,54 @@
+:root {
+  --purple: #582C83;      /* Furman purple */
+  --purple-dim: #7a55a3;
+  --ink: #1c1b22;
+  --paper: #fff;
+  --line: #e3e0e8;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+#map { position: absolute; inset: 0; }
+
+#panel {
+  position: absolute; z-index: 2;
+  top: max(12px, env(safe-area-inset-top)); left: 12px;
+  width: min(340px, calc(100vw - 24px));
+  background: var(--paper); border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  padding: 10px; display: flex; flex-direction: column; gap: 8px;
+}
+.row { display: flex; gap: 8px; }
+#q {
+  flex: 1; min-width: 0; padding: 10px 12px; font-size: 16px;   /* 16px: stops iOS zoom-on-focus */
+  border: 1px solid var(--line); border-radius: 10px; background: #fafafa;
+}
+#q:focus { outline: 2px solid var(--purple); outline-offset: 1px; background: #fff; }
+button {
+  border: 1px solid var(--line); background: #fafafa; border-radius: 10px;
+  padding: 10px 12px; font-size: 15px; cursor: pointer; color: var(--ink);
+}
+button:hover { background: #f0edf5; }
+button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
+#locate { font-size: 18px; line-height: 1; }
+
+#results { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow-y: auto; }
+#results li { padding: 9px 10px; border-radius: 8px; cursor: pointer; }
+#results li:hover, #results li[aria-selected="true"] { background: #f2eef8; }
+#results .kind { color: #6b6676; font-size: 12.5px; }
+
+#route { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+.ends { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; font-weight: 600; }
+.arrow { color: var(--purple-dim); }
+.eta { display: flex; gap: 8px; align-items: baseline; }
+.eta strong { font-size: 22px; color: var(--purple); }
+.eta span { color: #6b6676; }
+.stepfree { display: flex; gap: 7px; align-items: center; color: #3b3746; }
+#hint { margin: 0; color: #6b6676; font-size: 13px; }
+.warn { color: #9a3412; }
+
+@media (prefers-color-scheme: dark) {
+  :root { --ink: #ecebef; --paper: #23222a; --line: #3a3844; --purple: #b58ce0; --purple-dim: #9d78c9; }
+  #q, button { background: #2c2b34; color: var(--ink); }
+  #results li:hover, #results li[aria-selected="true"] { background: #332f3d; }
+  #hint, .eta span, #results .kind { color: #a5a1b0; }
+}
