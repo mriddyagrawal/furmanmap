@@ -8,14 +8,14 @@ name `Furman University`); whole-bbox figures shown for contrast._
 
 | Metric | Value |
 |---|---|
-| walkable ways | 493 |
-| network km | 52.63 |
-| graph nodes | 4184 |
-| graph edges | 4524 |
+| walkable ways | 494 |
+| network km | 52.65 |
+| graph nodes | 4185 |
+| graph edges | 4525 |
 | junctions | 653 |
 | dead ends | 143 |
 | components | 7 |
-| largest component nodes | 4068 |
+| largest component nodes | 4069 |
 | largest component pct | 97.2 |
 | orphan islands | 6 |
 | orphan nodes | 116 |
@@ -30,10 +30,8 @@ _Whole query bbox for contrast: 20 components, 88.1% in the largest, 1024 orphan
 |---|---|
 | buildings | 82 |
 | buildings named | 59 |
-| entrances | 29 |
+| entrances | 31 |
 | steps ways | 5 |
-
-**Still unnamed in OSM (Phase 1):** Plyler
 
 ## Orphan path islands (6)
 
