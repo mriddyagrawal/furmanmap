@@ -29,7 +29,22 @@
     <label class="stepfree" id="stepfree-row">
       <input type="checkbox" id="stepfree"> Avoid stairs
     </label>
-    <button id="clear">Clear</button>
+    <div class="actions">
+      <button id="start" class="primary">Start walking</button>
+      <button id="clear">Clear</button>
+    </div>
+  </div>
+
+  <div id="nav" hidden>
+    <div class="eta">
+      <strong id="nav-mins"></strong><span id="nav-dist"></span>
+    </div>
+    <div id="nav-to"></div>
+    <p id="nav-note"></p>
+    <div class="actions">
+      <button id="recenter" hidden>Re-centre</button>
+      <button id="stop">Stop</button>
+    </div>
   </div>
 
   <p id="hint">Tap any building to set a destination.</p>
