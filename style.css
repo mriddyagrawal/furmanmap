@@ -72,6 +72,27 @@ button:hover { background: var(--field-hover); }
 button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
 #locate { font-size: 18px; line-height: 1; }
 
+#compass { font-size: 16px; line-height: 1; padding: 10px 11px; }
+#compass-arrow {
+  display: inline-block; transform: rotate(0deg);
+  transition: transform .12s linear;      /* the rAF loop already smooths; this
+                                             only takes the edge off rounding */
+  color: var(--ink-soft);
+}
+#compass.live #compass-arrow { color: var(--purple); }
+
+/* Cone on the blue dot showing which way you are facing. */
+.heading-cone {
+  width: 0; height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 22px solid var(--purple);
+  opacity: .55;
+  transform-origin: 50% 100%;
+  margin-bottom: 26px;                    /* sit above the dot, not on it */
+  pointer-events: none;
+}
+
 #results { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow-y: auto; }
 #results li { padding: 9px 10px; border-radius: 8px; cursor: pointer; color: var(--ink); }
 #results li:hover,

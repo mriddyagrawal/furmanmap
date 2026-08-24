@@ -8,7 +8,7 @@
 // Bumped whenever something user-visible changes. GitHub Pages caches for ten
 // minutes, so "it is not there" and "you are looking at an old copy" are easy
 // to confuse — this makes the running version checkable at a glance.
-const BUILD = '2026-08-24 · compass';
+const BUILD = '2026-08-24 · smooth-compass';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -305,6 +305,7 @@ function wireSearch(named) {
  */
 function startCompass() {
   if (state.compassOn) return;
+  state.compassAsked = true;
   const listen = () => {
     state.compassOn = true;
     window.addEventListener('deviceorientationabsolute', onOrientation, true);
@@ -329,8 +330,79 @@ function onOrientation(e) {
     deg = 360 - e.alpha;                          // Android: alpha counts the other way
   }
   if (deg === null || isNaN(deg)) return;
-  state.heading = smoothHeading(state.heading, deg);
-  if (state.navigating && state.following && state.here) navUpdate(state.here);
+  // Record only. deviceorientation fires ~60x a second; touching the camera
+  // here is what made rotation choppy — each easeTo was interrupted by the
+  // next one about 6% of the way through. The rAF loop below drives the map.
+  state.headingTarget = deg;
+  if (state.heading == null) state.heading = deg;
+  updateCompassUI();
+  startCameraLoop();
+}
+
+/* One camera update per display frame, easing toward whatever the sensors last
+   reported. jumpTo, not easeTo: we are already interpolating, so a second
+   animation on top of it just fights this one. */
+function startCameraLoop() {
+  if (state.cameraLoop) return;
+  const step = () => {
+    state.cameraLoop = null;
+    let busy = false;
+
+    if (state.headingTarget != null) {
+      state.heading = smoothHeading(state.heading, state.headingTarget);
+      if (angleGap(state.heading, state.headingTarget) > 0.3) busy = true;
+    }
+
+    if (state.navigating && state.following && state.here) {
+      const c = state.mapCenter || state.here;
+      const k = 0.18;                       // centre catches up over ~10 frames
+      state.mapCenter = [c[0] + (state.here[0] - c[0]) * k,
+                         c[1] + (state.here[1] - c[1]) * k];
+      state.map.jumpTo({
+        center: state.mapCenter,
+        zoom: 18, pitch: 55,
+        bearing: state.heading ?? state.map.getBearing(),
+        padding: { top: Math.round(window.innerHeight * 0.45), bottom: 0, left: 0, right: 0 }
+      });
+      if (metres(state.mapCenter, state.here) > 0.5) busy = true;
+    } else if (state.heading != null) {
+      updateHeadingMarker();
+    }
+    updateCompassUI();
+    if (busy) startCameraLoop();
+  };
+  state.cameraLoop = requestAnimationFrame(step);
+}
+
+const angleGap = (a, b) => {
+  const d = Math.abs((a - b) % 360);
+  return d > 180 ? 360 - d : d;
+};
+
+/* A cone on the blue dot showing which way you face, and an arrow in the panel
+   that works whether or not the map is rotated. */
+function updateHeadingMarker() {
+  if (state.heading == null || !state.here) return;
+  if (!state.headingMarker) {
+    const el = document.createElement('div');
+    el.className = 'heading-cone';
+    state.headingMarker = new maplibregl.Marker({
+      element: el, rotationAlignment: 'map', pitchAlignment: 'map'
+    }).setLngLat(state.here).addTo(state.map);
+  }
+  state.headingMarker.setLngLat(state.here).setRotation(state.heading);
+}
+
+function updateCompassUI() {
+  const arrow = $('compass-arrow');
+  if (!arrow) return;
+  if (state.heading == null) { $('compass').hidden = false; return; }
+  $('compass').hidden = false;
+  $('compass').classList.add('live');
+  // Point where the user faces, relative to whichever way the map is turned.
+  arrow.style.transform = `rotate(${state.heading - state.map.getBearing()}deg)`;
+  $('compass').title = `Facing ${Math.round(state.heading)}\u00B0`;
+  updateHeadingMarker();
 }
 
 /* ---------- follow mode ---------- */
@@ -356,7 +428,7 @@ function startWalking() {
 
 function stopWalking() {
   state.navigating = false;
-  state.heading = null;
+  state.mapCenter = null;
   $('nav').hidden = true;
   $('hint').hidden = false;
   $('nav').classList.remove('arrived');
@@ -383,24 +455,15 @@ function navUpdate(here, gpsHeading) {
   // GPS heading is null standing still and noisy at walking pace, so fall back
   // to the direction the route goes next. Facing your destination beats
   // spinning with sensor noise.
-  // Compass first: it is the only source that responds when you turn on the
-  // spot, which is the moment the map most needs to be right. GPS course is the
-  // fallback while moving, and the route direction the fallback for neither.
-  let bearing = state.heading;
-  if (bearing === undefined || bearing === null) {
-    bearing = (typeof gpsHeading === 'number' && !isNaN(gpsHeading)) ? gpsHeading : null;
+  // With no compass, fall back to GPS course, then to the direction the route
+  // runs next. The camera loop applies whichever we end up with.
+  if (state.headingTarget == null) {
+    state.headingTarget = (typeof gpsHeading === 'number' && !isNaN(gpsHeading))
+      ? gpsHeading
+      : bearingAlongRoute(state.route.line, state.route.total, along);
+    if (state.heading == null) state.heading = state.headingTarget;
   }
-  if (bearing === null) {
-    bearing = bearingAlongRoute(state.route.line, state.route.total, along);
-  }
-
-  state.map.easeTo({
-    center: here, zoom: 18, pitch: 55, bearing,
-    // Large top padding puts the map's centre — and so the blue dot — low on
-    // screen, so most of the view is the path ahead rather than behind.
-    padding: { top: Math.round(window.innerHeight * 0.45), bottom: 0, left: 0, right: 0 },
-    duration: state.heading != null ? 250 : 900, easing: t => t
-  });
+  startCameraLoop();
 }
 
 function wireControls() {
@@ -424,6 +487,15 @@ function wireControls() {
     }
     hint('Finding you…');
     if (!state.tracking) state.geo.trigger();   // same control that draws the dot
+  };
+
+  // Android can start listening immediately; iOS needs the tap below.
+  const DOE = window.DeviceOrientationEvent;
+  if (DOE && typeof DOE.requestPermission !== 'function') startCompass();
+  $('compass').onclick = () => {
+    if (state.compassOn) return;
+    startCompass();
+    hint('Compass enabled.');
   };
 
   $('start').onclick = startWalking;
