@@ -52,8 +52,12 @@ async function main() {
   });
   map.addControl(state.geo, 'bottom-right');
   state.geo.on('geolocate', pos => {
-    state.from = { name: 'My location',
-                   point: [pos.coords.longitude, pos.coords.latitude] };
+    state.here = [pos.coords.longitude, pos.coords.latitude];
+    // trackUserLocation fires this on every GPS update, not just when asked.
+    // Only adopt it as the route origin if the user actually requested that,
+    // or a position tick a second later silently overwrites a chosen A -> B.
+    if (!state.followMe) return;
+    state.from = { name: 'My location', point: state.here };
     hint('');
     draw();
   });
@@ -142,8 +146,19 @@ function nearestNode(pt) {
 }
 
 function pick(feature) {
-  if (state.to && state.to.id !== feature.id) state.from = state.to;
+  if (state.to && state.to.id !== feature.id) {
+    state.from = state.to;
+    state.followMe = false;      // an explicit origin wins over GPS tracking
+  }
   state.to = feature;
+  draw();
+}
+
+/* Let the user say "start here" for the currently selected building, so an
+   A -> B route does not depend on remembering to tap in the right order. */
+function setOrigin(feature) {
+  state.from = feature;
+  state.followMe = false;
   draw();
 }
 
@@ -243,8 +258,21 @@ function wireControls() {
     if (!window.isSecureContext) {
       return hint('Location needs a secure page: use localhost or an https:// address.', true);
     }
+    state.followMe = true;
+    if (state.here) {             // already tracking — no need to wait for a fix
+      state.from = { name: 'My location', point: state.here };
+      return draw();
+    }
     hint('Finding you…');
     state.geo.trigger();          // same control that draws the blue dot
+  };
+
+  // Swap the two ends, which is the fastest fix when the order came out wrong.
+  $('swap').onclick = () => {
+    if (!(state.from && state.to)) return;
+    [state.from, state.to] = [state.to, state.from];
+    state.followMe = false;
+    draw();
   };
 }
 

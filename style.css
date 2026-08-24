@@ -39,6 +39,7 @@ button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
 #route { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 8px; }
 .ends { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; font-weight: 600; }
 .arrow { color: var(--purple-dim); }
+.swap { padding: 2px 7px; font-size: 14px; line-height: 1.2; border-radius: 7px; }
 .eta { display: flex; gap: 8px; align-items: baseline; }
 .eta strong { font-size: 22px; color: var(--purple); }
 .eta span { color: #6b6676; }
