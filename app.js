@@ -118,6 +118,7 @@ async function main() {
   state.map = map;
   wireSearch(named);
   wireControls();
+  setEditing('to');
 }
 
 const empty = () => ({ type: 'FeatureCollection', features: [] });
@@ -145,6 +146,9 @@ function nearestNode(pt) {
   return hit.properties.id;
 }
 
+/* Tapping buildings on the map chains: the previous destination becomes the
+   start. Searching does NOT chain — it fills whichever end you are editing,
+   which is what every map app does and what the chips above make visible. */
 function pick(feature) {
   if (state.to && state.to.id !== feature.id) {
     state.from = state.to;
@@ -152,6 +156,23 @@ function pick(feature) {
   }
   state.to = feature;
   draw();
+}
+
+function setDestination(feature) {
+  state.to = feature;
+  // A destination with no start is half a question. Default to where you are.
+  if (!state.from && state.here) {
+    state.from = { name: 'My location', point: state.here };
+    state.followMe = true;
+  }
+  draw();
+}
+
+function setEditing(which) {
+  state.editing = which;
+  for (const id of ['from', 'to']) $(id).dataset.editing = String(id === which);
+  $('q').placeholder = which === 'from' ? 'Search a starting point…'
+                                        : 'Search a building…';
 }
 
 /* Let the user say "start here" for the currently selected building, so an
@@ -167,7 +188,11 @@ function draw() {
   const label = f => f ? (f.name || f.properties.name) : '—';
   $('from').textContent = label(state.from);
   $('to').textContent = label(state.to);
-  $('route').hidden = !(state.from && state.to);
+  // Show the panel as soon as either end exists, so the chips are reachable
+  // while the route is still half-specified.
+  $('route').hidden = !(state.from || state.to);
+  $('eta-row').hidden = !(state.from && state.to);
+  $('stepfree-row').hidden = !(state.from && state.to);
   if (!(state.from && state.to)) {
     // Half a route is still progress — say what is missing instead of nothing.
     if (state.from) hint(`From ${label(state.from)} — now pick a destination.`);
@@ -240,8 +265,10 @@ function wireSearch(named) {
     }).join('');
     list.hidden = !hits.length;
     list.querySelectorAll('li').forEach(li => li.onclick = () => {
-      pick(named.find(f => f.id === li.dataset.id));
+      const f = named.find(x => x.id === li.dataset.id);
+      if (state.editing === 'from') setOrigin(f); else setDestination(f);
       q.value = ''; list.hidden = true;
+      setEditing('to');
     });
   });
 }
@@ -266,6 +293,9 @@ function wireControls() {
     hint('Finding you…');
     state.geo.trigger();          // same control that draws the blue dot
   };
+
+  $('from').onclick = () => { setEditing('from'); $('q').focus(); };
+  $('to').onclick = () => { setEditing('to'); $('q').focus(); };
 
   // Swap the two ends, which is the fastest fix when the order came out wrong.
   $('swap').onclick = () => {

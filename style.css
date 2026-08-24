@@ -40,6 +40,12 @@ button:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
 .ends { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; font-weight: 600; }
 .arrow { color: var(--purple-dim); }
 .swap { padding: 2px 7px; font-size: 14px; line-height: 1.2; border-radius: 7px; }
+.end {
+  padding: 3px 9px; font-size: 14px; font-weight: 600; border-radius: 8px;
+  border: 1px solid var(--line); max-width: 46%; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.end[data-editing="true"] { border-color: var(--purple); background: #f2eef8; }
 .eta { display: flex; gap: 8px; align-items: baseline; }
 .eta strong { font-size: 22px; color: var(--purple); }
 .eta span { color: #6b6676; }

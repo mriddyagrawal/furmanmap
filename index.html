@@ -20,13 +20,13 @@
 
   <div id="route" hidden>
     <div class="ends">
-      <span id="from">—</span>
+      <button id="from" class="end" title="Change the start">—</button>
       <button id="swap" class="swap" title="Swap start and destination"
               aria-label="Swap start and destination">⇄</button>
-      <span id="to">—</span>
+      <button id="to" class="end" title="Change the destination">—</button>
     </div>
-    <div class="eta"><strong id="mins"></strong><span id="dist"></span></div>
-    <label class="stepfree">
+    <div class="eta" id="eta-row"><strong id="mins"></strong><span id="dist"></span></div>
+    <label class="stepfree" id="stepfree-row">
       <input type="checkbox" id="stepfree"> Avoid stairs
     </label>
     <button id="clear">Clear</button>
