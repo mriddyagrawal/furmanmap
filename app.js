@@ -34,7 +34,7 @@ async function main() {
     const ring = ringOf(b.geometry);
     const doors = entrances.features
       .filter(e => inRing(ring, e.geometry.coordinates))
-      .map(e => e.geometry.coordinates);
+      .map(e => ({ at: e.geometry.coordinates, kind: e.properties.entrance }));
     state.entrancesFor.set(b.id, doors);
   }
 
@@ -122,13 +122,16 @@ function hint(text, warn) {
   $('hint').innerHTML = warn ? `<span class="warn">${text}</span>` : text;
 }
 
-/* Snap a building to the graph: its mapped door if there is one, else the
-   nearest node to its centroid. Returns the node plus the real-world point so
-   the last few metres can be drawn as a dashed leader. */
-function snap(feature) {
-  const doors = state.entrancesFor.get(feature.id) || [];
-  const target = doors.length ? doors[0] : centroid(feature.geometry);
-  return { node: nearestNode(target), point: target };
+/* Snap a building to the graph: its mapped doors if it has any, else the nearest
+   node to its centroid. Returns candidate {node, point} pairs — routing picks
+   between them, because a building with four entrances has four answers and the
+   right one depends on where you are coming from. */
+function snapCandidates(feature) {
+  const doors = (state.entrancesFor.get(feature.id) || [])
+    // Service and emergency doors are mapped but not usable as a destination.
+    .filter(d => !['service', 'emergency'].includes(d.kind));
+  const pts = doors.length ? doors.map(d => d.at) : [centroid(feature.geometry)];
+  return pts.map(p => ({ node: nearestNode(p), point: p }));
 }
 
 // Turf's nearestPoint over a collection built once at load, rather than a
@@ -158,11 +161,18 @@ function draw() {
   }
   hint('');
 
-  const a = state.from.geometry ? snap(state.from)
-                                : { node: nearestNode(state.from.point), point: state.from.point };
-  const b = snap(state.to);
+  const froms = state.from.geometry ? snapCandidates(state.from)
+    : [{ node: nearestNode(state.from.point), point: state.from.point }];
+  const tos = snapCandidates(state.to);
   const avoid = $('stepfree').checked;
-  const r = aStar(state.graph, a.node, b.node, avoid);
+
+  // Try every door pair and keep the shortest. A route costs well under a
+  // millisecond, so exhaustive beats guessing which entrance you want.
+  let a = froms[0], b = tos[0], r = null;
+  for (const f of froms) for (const t of tos) {
+    const cand = aStar(state.graph, f.node, t.node, avoid);
+    if (cand && (!r || cand.metres < r.metres)) { r = cand; a = f; b = t; }
+  }
 
   if (!r) {
     $('mins').textContent = '—';
