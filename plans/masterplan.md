@@ -5,8 +5,8 @@ _Written 2026-08-23. Living document: update the Status column as phases close._
 | Phase | What it is | Status |
 |---|---|---|
 | **0** | Data pipeline — extract, convert, audit, auto-refresh | **Complete** |
-| **1** | Data sprint — fix OSM so routing can work | In progress — connectivity criteria already met; entrances + stairs remain |
-| **2** | v0 outdoor wayfinder — the app | Not started |
+| **1** | Data sprint — fix OSM so routing can work | 4 of 5 exit criteria met; **staircases are the only blocker left** |
+| **2** | v0 outdoor wayfinder — the app | **Live** at https://mriddyagrawal.github.io/furmanmap/ — plus follow mode and compass, beyond the original scope |
 | **3** | Adoption — get freshmen actually using it | Not started |
 | **4** | Indoor pilot — 2–3 buildings | Not started |
 | **5** | Institutional decision — hand off or pitch procurement | Not started |
@@ -62,7 +62,7 @@ If that works reliably, v0 is done — regardless of how much else is unbuilt.
 | 0.1 | Overpass extract for the campus bbox, with mirror fallback + retries | `scripts/fetch-osm.sh` → `data/campus.osm.json` (untracked intermediate) | Done |
 | 0.2 | Convert to app-ready GeoJSON, preserving OSM node IDs on paths | `scripts/build-geojson.py` → `data/{buildings,paths,entrances}.geojson` | Written, unrun |
 | 0.3 | Connectivity + completeness audit | `scripts/audit.py` → `data/audit.md`, `data/audit.json` | Written, unrun |
-| 0.4 | Scheduled refresh with anti-vandalism guardrail | `.github/workflows/refresh-osm.yml` | Written, **still untested in CI** |
+| 0.4 | Scheduled refresh with anti-vandalism guardrail | `.github/workflows/refresh-osm.yml` | **Done** — ran green 2026-08-24, committed a real refresh; guardrail verified to exit non-zero on gutted data |
 | 0.5 | Clip to Furman's OSM campus boundary; flag features `on_campus` | `data/boundary.geojson` | Done — boundary already existed as an OSM relation |
 | 0.6 | Turn the audit's gap list into the Phase 1 punch list | `data/audit.md` | Done — audit.md *is* the punch list |
 
@@ -115,11 +115,11 @@ bbox figure is dominated by off-campus fringe and means nothing here.
 
 | Criterion | Target | Measured 2026-08-23 | |
 |---|---|---|---|
-| `largest_component_pct` | ≥ 97% | **97.1%** | met |
+| `largest_component_pct` | ≥ 97% | **97.2%** | met |
 | `near_miss_gaps` | ≤ 3 | **2** | met |
 | `phase1_buildings_still_unnamed` | empty | 1 (Plyler typo) | trivial |
-| `entrances` | ≥ 30 | **12** | field work |
-| `steps_ways` | ≥ 15 | **4** | field work |
+| `entrances` | ≥ 30 | **31** | met |
+| `steps_ways` | ≥ 15 | **5** | field work — the only one left |
 
 The path network is in better shape than the survey suggested. What is missing is
 exactly the data that only exists if someone walks campus — entrances and stairs.
