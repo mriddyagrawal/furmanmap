@@ -8,7 +8,7 @@
 // Bumped whenever something user-visible changes. GitHub Pages caches for ten
 // minutes, so "it is not there" and "you are looking at an old copy" are easy
 // to confuse — this makes the running version checkable at a glance.
-const BUILD = '2026-08-24 · smooth-compass';
+const BUILD = '2026-08-24 · fast-fix';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -52,7 +52,19 @@ async function main() {
   // control rather than calling navigator.geolocation separately, so the blue
   // dot and the route origin can never disagree about where you are.
   state.geo = new maplibregl.GeolocateControl({
-    positionOptions: { enableHighAccuracy: true },
+    positionOptions: {
+      // enableHighAccuracy forces the GPS chip instead of fast wifi/cell
+      // triangulation — right for walking, but slow to a first fix.
+      enableHighAccuracy: true,
+      // These two are the reason the dot took seconds to appear. Passing
+      // positionOptions replaces MapLibre's defaults wholesale rather than
+      // merging, so omitting them left maximumAge at the browser default of 0
+      // — "reject any cached position" — which forces a cold GPS fix every
+      // time. Accepting a fix up to 20s old shows the dot immediately; the
+      // watch then refines it within a second or two.
+      maximumAge: 20000,
+      timeout: 12000
+    },
     trackUserLocation: true, showUserLocation: true, showAccuracyCircle: true
   });
   map.addControl(state.geo, 'bottom-right');
