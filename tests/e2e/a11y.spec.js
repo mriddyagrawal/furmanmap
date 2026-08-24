@@ -22,6 +22,12 @@ for (const theme of ['light', 'dark']) {
   test(`no accessibility violations in ${theme} mode`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: theme });
     await ready(page);
+    // Wait for the build stamp to be populated. It is written on the map's load
+    // event, so scanning earlier silently skips it — text that is not there yet
+    // has no contrast to check, and this test passed locally for that reason
+    // while failing in CI where the timing differed.
+    await expect.poll(() => page.locator('#build').textContent(),
+      { timeout: 20000 }).toMatch(/\S/);
     // Open every pane so the scan covers the sheet, not just the search bar.
     await page.fill('#q', 'duke');
     await page.locator('#suggest li').first().click();
