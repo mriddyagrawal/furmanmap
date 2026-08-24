@@ -146,7 +146,7 @@ cannot yet offer a step-free mode.
 | 2.8 | Blue dot + "route from my location" | Works on a phone, over HTTPS |
 | 2.9 | Accessible mode — filter/penalise `highway=steps` | Toggle produces a visibly different route where stairs exist |
 | 2.10 | Mobile layout, share-a-link URL state, offline-tolerant load | Usable one-handed outdoors in sunlight |
-| 2.11 | Ship to GitHub Pages | Public HTTPS URL |
+| 2.11 | Ship to GitHub Pages | **Done** — https://mriddyagrawal.github.io/furmanmap/ |
 
 ### Testing Phase 2 — this is the part to be precise about
 
