@@ -2,59 +2,94 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#582C83">
 <title>Furman Wayfinder</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+
+<!-- One mode at a time: browse -> place -> directions -> nav.
+     CSS keys off data-mode, so no rule has to guess what else is on screen. -->
+<body data-mode="browse">
+
 <div id="map"></div>
 
-<div id="panel">
-  <div class="row">
-    <input id="q" type="search" placeholder="Search a building…" autocomplete="off"
-           aria-label="Search for a building">
-    <button id="compass" title="Compass" aria-label="Compass — tap to enable">
-      <svg id="compass-arrow" viewBox="0 0 24 24" width="15" height="15"
-           aria-hidden="true"><path d="M12 2.5 20.5 21 12 16.3 3.5 21Z"/></svg>
-      <span id="compass-label">compass</span>
+<header id="top">
+  <!-- browse / place -->
+  <div id="searchbar">
+    <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="q" type="text" placeholder="Search Furman" autocomplete="off"
+           enterkeyhint="search" aria-label="Search for a building">
+    <button id="q-clear" class="iconbtn" aria-label="Clear search" hidden>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
     </button>
-    <button id="locate" title="Route from my location" aria-label="Route from my location">◎</button>
   </div>
-  <ul id="results" role="listbox" hidden></ul>
+  <ul id="suggest" role="listbox" aria-label="Search results" hidden></ul>
 
-  <div id="route" hidden>
-    <div class="ends">
-      <button id="from" class="end" title="Change the start">—</button>
-      <button id="swap" class="swap" title="Swap start and destination"
-              aria-label="Swap start and destination">⇄</button>
-      <button id="to" class="end" title="Change the destination">—</button>
+  <!-- directions / nav -->
+  <div id="endpoints">
+    <button id="dir-back" class="iconbtn" aria-label="Back">
+      <svg class="icon" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+    </button>
+    <div class="fields">
+      <button class="field" id="f-from"><i class="pip from"></i><span>Your location</span></button>
+      <button class="field" id="f-to"><i class="pip to"></i><span>Choose destination</span></button>
     </div>
-    <div class="eta" id="eta-row"><strong id="mins"></strong><span id="dist"></span></div>
-    <label class="stepfree" id="stepfree-row">
+    <button id="dir-swap" class="iconbtn" aria-label="Swap start and destination">
+      <svg class="icon" viewBox="0 0 24 24"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="fabs">
+  <button id="fab-compass" class="fab" aria-label="Compass">
+    <svg class="icon" id="fab-arrow" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M12 2.5 20.5 21 12 16.3 3.5 21Z"/>
+    </svg>
+  </button>
+  <button id="fab-locate" class="fab" aria-label="Show my location">
+    <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+  </button>
+</div>
+
+<section id="sheet" aria-live="polite">
+  <div id="grip"></div>
+
+  <!-- place -->
+  <div class="pane pane-place">
+    <h2 id="p-name">—</h2>
+    <p id="p-kind" class="sub"></p>
+    <p id="p-eta" class="figure"><strong>—</strong><span></span></p>
+    <button id="p-directions" class="btn primary">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3 11 22 2l-9 19-2-8-8-2Z"/></svg>
+      Directions
+    </button>
+  </div>
+
+  <!-- directions -->
+  <div class="pane pane-dir">
+    <p id="d-eta" class="figure"><strong>—</strong><span></span></p>
+    <label id="d-stepfree" class="toggle">
       <input type="checkbox" id="stepfree"> Avoid stairs
     </label>
-    <div class="actions">
-      <button id="start" class="primary">Start walking</button>
-      <button id="clear">Clear</button>
-    </div>
+    <p id="d-note" class="sub"></p>
+    <button id="d-go" class="btn primary">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3 11 22 2l-9 19-2-8-8-2Z"/></svg>
+      Go
+    </button>
   </div>
 
-  <div id="nav" hidden>
-    <div class="eta">
-      <strong id="nav-mins"></strong><span id="nav-dist"></span>
-    </div>
-    <div id="nav-to"></div>
-    <p id="nav-note"></p>
-    <div class="actions">
-      <button id="recenter" hidden>Re-centre</button>
-      <button id="stop">Stop</button>
-    </div>
+  <!-- navigating -->
+  <div class="pane pane-nav">
+    <p id="n-eta" class="figure"><strong>—</strong><span></span></p>
+    <p id="n-to" class="sub"></p>
+    <p id="n-note" class="sub warn"></p>
+    <button id="n-stop" class="btn">Stop</button>
   </div>
 
-  <p id="hint">Tap any building to set a destination.</p>
-  <p id="build" title="build"></p>
-</div>
+  <p id="build"></p>
+</section>
 
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/fuse.js@7.0.0/dist/fuse.min.js"></script>
