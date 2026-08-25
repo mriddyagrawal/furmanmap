@@ -228,3 +228,41 @@ test('the byline sits in the attribution, where map credits belong', async ({ pa
   await expect(attrib).toContainText(/Made by Mridul/);
   await expect(attrib).toContainText(/OpenStreetMap/);
 });
+
+test('the site is installable and carries its own icon', async ({ page }) => {
+  // A campus map is the kind of thing someone adds to their home screen, so the
+  // manifest and touch icon are the parts that decide what it looks like there.
+  await page.goto('/');
+  const icons = await page.evaluate(() => ({
+    favicon: document.querySelector('link[rel="icon"]')?.getAttribute('href'),
+    touch: document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href'),
+    manifest: document.querySelector('link[rel="manifest"]')?.getAttribute('href')
+  }));
+  expect(icons.favicon).toMatch(/logo-32/);
+  expect(icons.touch).toMatch(/logo-180/);
+  expect(icons.manifest).toBeTruthy();
+
+  // Every declared asset must actually be there — a broken icon link is
+  // invisible until someone installs it and gets a blank square.
+  for (const href of Object.values(icons)) {
+    const res = await page.request.get(new URL(href, page.url()).toString());
+    expect(res.status(), `${href} should be served`).toBe(200);
+  }
+  const manifest = await (await page.request.get(new URL(icons.manifest, page.url()).toString())).json();
+  expect(manifest.icons.length).toBeGreaterThan(1);
+  for (const i of manifest.icons) {
+    const res = await page.request.get(new URL(i.src, page.url()).toString());
+    expect(res.status(), `${i.src} listed in the manifest should be served`).toBe(200);
+  }
+});
+
+test('the search box still shows a search icon', async ({ page }) => {
+  // The magnifying glass is what tells someone the bar is for typing into. At
+  // 20px the logo's tower detail disappears entirely, so swapping it in would
+  // cost the affordance and gain an unreadable smudge.
+  await ready(page);
+  const svg = page.locator('#searchbar svg').first();
+  await expect(svg).toBeVisible();
+  const html = await svg.innerHTML();
+  expect(html, 'a circle and a handle — a magnifying glass').toMatch(/circle/);
+});
