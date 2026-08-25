@@ -135,3 +135,49 @@ test('the chosen type actually reaches every control', async ({ page }) => {
     }
   }
 });
+
+test('the basemap distinguishes its categories, and water is blue', async ({ page }) => {
+  // Positron ships building and residential land at 1.00:1 — identical — and
+  // water at 4% saturation. On a wayfinding map those are landmarks, so this
+  // asserts they stay told apart if the upstream style ever changes.
+  await ready(page);
+  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 25000 });
+
+  const colours = await page.evaluate(() => {
+    const m = window.__wayfinder.map, out = {};
+    for (const l of m.getStyle().layers) {
+      const id = l.id.toLowerCase();
+      if (id.startsWith('buildings-')) continue;
+      const prop = l.type === 'fill' ? 'fill-color' : null;
+      if (!prop) continue;
+      let c; try { c = m.getPaintProperty(l.id, prop); } catch (e) { continue; }
+      if (typeof c !== 'string') continue;
+      if (/^water$/.test(id)) out.water = c;
+      if (/^park$/.test(id)) out.park = c;
+      if (/^building$/.test(id)) out.building = c;
+      if (/residential/.test(id)) out.land = c;
+    }
+    return out;
+  });
+
+  const rgb = h => { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  const lum = c => { const v = c.map(x => x / 255).map(x => x <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4);
+                     return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; };
+  const ratio = (a, b) => { const [x, y] = [lum(rgb(a)), lum(rgb(b))]; return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  const sat = h => { const [r, g, b] = rgb(h); const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+                     return mx === 0 ? 0 : (mx - mn) / mx * 100; };
+
+  expect(colours.water, 'water layer found').toBeTruthy();
+  expect(sat(colours.water), `water is ${colours.water}, a lake should not be grey`).toBeGreaterThan(25);
+  const [r, g, b] = rgb(colours.water);
+  expect(b, 'and it should be blue, not just saturated').toBeGreaterThan(Math.max(r, g));
+
+  if (colours.building && colours.land) {
+    expect(ratio(colours.building, colours.land),
+      `building ${colours.building} vs land ${colours.land}`).toBeGreaterThan(1.12);
+  }
+  if (colours.park && colours.land) {
+    expect(ratio(colours.park, colours.land),
+      `park ${colours.park} vs land ${colours.land}`).toBeGreaterThan(1.10);
+  }
+});

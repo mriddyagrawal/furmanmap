@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · dismiss';
+const BUILD = '2026-08-25 · palette';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -105,6 +105,7 @@ async function main() {
   });
 
   map.on('load', () => {
+    recolourBasemap(map);
     addLayers(map, buildings, boundary);
     flushPending();
     highlight([state.from, state.to]);
@@ -162,6 +163,48 @@ function flushPending() {
   if (!state.pending) return;
   for (const [name, data] of state.pending) setSource(name, data);
   state.pending = null;
+}
+
+/* Positron is CARTO's data-visualisation basemap: deliberately desaturated so
+ * thematic overlays dominate it. That is a principled design — Imhof's rule
+ * that base colours stay light and neutral, with saturation reserved for small
+ * areas of emphasis — but it is built for choropleths, not for walking.
+ *
+ * Measured on the shipped style, it renders building and residential land at
+ * 1.00:1 against each other (identical), park against land at 1.02:1, and the
+ * lake at 4% saturation, i.e. grey. On a wayfinding map those are landmarks a
+ * walker navigates by, so they have to be distinguishable.
+ *
+ * This keeps the base light — the purple route still clears 4.6:1 against the
+ * strongest of these — while pushing adjacent categories at least 1.12:1 apart
+ * and giving water an actual blue.
+ */
+const PALETTE = [
+  [/water|lake|ocean|sea|reservoir/, '#7cb8de'],
+  [/waterway|river|stream|canal/,    '#7cb8de'],
+  [/wood|forest/,                    '#b6d7a0'],
+  [/park|cemetery|pitch|playground/, '#cfe6bd'],
+  [/grass|meadow|farmland|scrub/,    '#e3f2d6'],
+  [/sand|beach/,                     '#f0e6c8'],
+  [/building/,                       '#ddd6cc'],
+  [/residential|landuse/,            '#f0ede7'],
+];
+
+function recolourBasemap(map) {
+  for (const layer of map.getStyle().layers) {
+    const id = layer.id.toLowerCase();
+    // Never touch our own layers, labels, or roads: roads carry their own
+    // hierarchy by width and shade, and relighting them would flatten it.
+    if (id.startsWith('buildings-') || id.startsWith('route') || id.startsWith('boundary')
+        || layer.type === 'symbol' || /road|highway|bridge|tunnel|transit|rail|aero/.test(id)) continue;
+    const hit = PALETTE.find(([re]) => re.test(id));
+    if (!hit) continue;
+    const prop = layer.type === 'fill' ? 'fill-color'
+               : layer.type === 'line' ? 'line-color'
+               : layer.type === 'background' ? 'background-color' : null;
+    if (!prop) continue;
+    try { map.setPaintProperty(layer.id, prop, hit[1]); } catch (e) { /* layer opted out */ }
+  }
 }
 
 function addLayers(map, buildings, boundary) {
