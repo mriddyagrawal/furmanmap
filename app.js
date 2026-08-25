@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · no-outline';
+const BUILD = '2026-08-25 · updated';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -49,9 +49,12 @@ function measureSheet() {
 /* ---------- boot ---------- */
 
 async function main() {
-  const [buildings, paths, entrances, boundary] = await Promise.all(
-    ['buildings', 'paths', 'entrances', 'boundary']
-      .map(n => fetch(`data/${n}.geojson`).then(r => r.json())));
+  const [buildings, paths, entrances, boundary, meta] = await Promise.all([
+    ...['buildings', 'paths', 'entrances', 'boundary']
+      .map(n => fetch(`data/${n}.geojson`).then(r => r.json())),
+    fetch('data/meta.json').then(r => r.json()).catch(() => null)
+  ]);
+  state.meta = meta;
 
   const onCampus = f => f.properties.on_campus;
   state.places = buildings.features.filter(f => onCampus(f) && f.properties.name);
@@ -72,7 +75,15 @@ async function main() {
 
   const map = new maplibregl.Map({
     container: 'map', style: STYLE, center: CENTER, zoom: 15.3,
-    attributionControl: { compact: true }, hash: true
+    // Credits belong in the attribution bar. It is where a map's provenance is
+    // conventionally read, so a byline there is professional rather than a
+    // signature stuck on the artwork.
+    attributionControl: {
+      compact: true,
+      customAttribution:
+        '<a href="https://github.com/mriddyagrawal/furmanmap" target="_blank" rel="noopener">Made by Mridul</a>'
+    },
+    hash: true
   });
   state.map = map;
 
@@ -121,9 +132,17 @@ async function main() {
       map.getCanvas().style.cursor = named ? 'pointer' : '';
     });
     map.on('mouseleave', 'buildings-fill', () => map.getCanvas().style.cursor = '');
+    // What a visitor wants to know is how current the map is. The build id
+    // still matters for telling a stale cache from a real bug, so it moves to
+    // the tooltip and the console rather than disappearing.
+    const when = state.meta && state.meta.generated;
+    $('build').textContent = when
+      ? `Last updated ${new Date(when + 'T00:00:00Z').toLocaleDateString(undefined,
+          { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}`
+      : 'Last updated — unknown';
     const stamp = `${BUILD} · ${state.places.length} places · `
                 + `${state.graph.size.toLocaleString()} path nodes`;
-    $('build').textContent = stamp;
+    $('build').title = stamp;
     $('searchbar').title = stamp;
     console.info(`Furman Wayfinder — ${stamp}`);
   });
