@@ -44,9 +44,12 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # A cache hit restores the browser but not the shared libraries it links
-      # against, and those live outside the cached directory.
+      # against. ubuntu-latest already ships almost all of them, so this only
+      # fills gaps — and it is skippable if the browser launches without it.
+      # Measured: with this step the cached run was SLOWER than no cache at all
+      # (307s vs 278s), because apt dominates whatever the cache saves.
       - name: Install system dependencies
-        if: steps.pw-cache.outputs.cache-hit == 'true'
+        if: steps.pw-cache.outputs.cache-hit == 'true' && vars.PW_SKIP_DEPS != '1'
         run: npx playwright install-deps chromium
 
       - name: Browser tests (flow, accessibility, budgets)
