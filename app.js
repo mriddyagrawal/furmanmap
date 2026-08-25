@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · sticky-search';
+const BUILD = '2026-08-25 · highlight';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -107,6 +107,7 @@ async function main() {
   map.on('load', () => {
     addLayers(map, buildings, boundary);
     flushPending();
+    highlight([state.from, state.to]);
     map.on('click', 'buildings-fill', e => {
       const fid = e.features[0].properties.fid;
       const f = state.places.find(b => b.id === fid);
@@ -135,6 +136,18 @@ async function main() {
 }
 
 const empty = () => ({ type: 'FeatureCollection', features: [] });
+
+/* Light up whole buildings rather than dropping a dot on them: the shape is
+   what you are walking to, and at campus zoom it reads instantly. */
+function highlight(features) {
+  const ids = features.filter(f => f && f.id).map(f => f.id);
+  for (const layer of ['buildings-selected', 'buildings-selected-line']) {
+    if (state.map && state.map.getLayer && state.map.getLayer(layer)) {
+      state.map.setFilter(layer, ['in', ['get', 'fid'], ['literal', ids]]);
+    }
+  }
+  state.highlighted = ids;
+}
 
 /* Sources exist only after the map's `load` event. Writing to one before then
    throws, and an exception mid-handler silently abandons everything after it —
@@ -168,7 +181,6 @@ function addLayers(map, buildings, boundary) {
   map.addSource('route', { type: 'geojson', data: empty() });
   map.addSource('route-done', { type: 'geojson', data: empty() });
   map.addSource('leader', { type: 'geojson', data: empty() });
-  map.addSource('pin', { type: 'geojson', data: empty() });
 
   map.addLayer({ id: 'boundary-line', type: 'line', source: 'boundary',
     paint: { 'line-color': '#582C83', 'line-width': 1.4, 'line-opacity': .3, 'line-dasharray': [3, 2] } });
@@ -176,6 +188,16 @@ function addLayers(map, buildings, boundary) {
     paint: { 'fill-color': '#582C83', 'fill-opacity': ['case', ['has', 'name'], .22, .1] } });
   map.addLayer({ id: 'buildings-line', type: 'line', source: 'buildings',
     paint: { 'line-color': '#582C83', 'line-width': .7, 'line-opacity': .45 } });
+  // Selection is drawn as its own filtered pass over the same source, rather
+  // than by mutating the data. Setting a filter is cheap; re-uploading the
+  // whole building collection on every tap is not.
+  map.addLayer({ id: 'buildings-selected', type: 'fill', source: 'buildings',
+    filter: ['in', ['get', 'fid'], ['literal', []]],
+    paint: { 'fill-color': '#582C83', 'fill-opacity': .55 } });
+  map.addLayer({ id: 'buildings-selected-line', type: 'line', source: 'buildings',
+    filter: ['in', ['get', 'fid'], ['literal', []]],
+    paint: { 'line-color': '#3d1d5c', 'line-width': 2.2 } });
+
   map.addLayer({ id: 'buildings-label', type: 'symbol', source: 'buildings',
     filter: ['has', 'name'], minzoom: 15.4,
     layout: { 'text-field': ['get', 'name'], 'text-size': 11, 'text-max-width': 8,
@@ -194,9 +216,6 @@ function addLayers(map, buildings, boundary) {
   map.addLayer({ id: 'route-line', type: 'line', source: 'route',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': '#582C83', 'line-width': 5.5 } });
-  map.addLayer({ id: 'pin-dot', type: 'circle', source: 'pin',
-    paint: { 'circle-radius': 7, 'circle-color': '#582C83',
-             'circle-stroke-width': 3, 'circle-stroke-color': '#fff' } });
 }
 
 /* ---------- search ---------- */
@@ -290,13 +309,13 @@ function chooseMyLocation(which) {
 }
 const hideSuggestions = () => { $('suggest').hidden = true; };
 
-/* The cross undoes the whole search: the text, the selected place, the pin and
-   any route it produced. Clearing only the text would leave the map showing a
-   selection the search bar no longer names. */
+/* The cross undoes the whole search: the text, the selected place, its
+   highlight and any route it produced. Clearing only the text would leave the
+   map showing a selection the search bar no longer names. */
 function clearSelection() {
   state.to = null;
   state.route = null;
-  setSource('pin', empty());
+  highlight([]);
   setSource('route', empty());
   setSource('route-done', empty());
   setSource('leader', empty());
@@ -319,8 +338,8 @@ function selectPlace(feature, { fly }) {
   // Keep the search bar in step with the map, however the place was chosen.
   $('q').value = nameOf(feature) || '';
   $('q-clear').hidden = !$('q').value;
+  highlight([feature]);
   const c = centroid(feature.geometry);
-  setSource('pin', turf.point(c));
   if (fly && state.map.loaded()) state.map.flyTo({ center: c, zoom: 17, duration: 700 });
 }
 
@@ -428,7 +447,7 @@ function route() {
   setSource('route', state.route.line);
   setSource('leader', { type: 'FeatureCollection', features: [
     leg(r.a.point, r.line[0]), leg(r.line[r.line.length - 1], r.b.point)] });
-  setSource('pin', empty());
+  highlight([state.from, state.to]);
 
   const bb = r.line.concat([r.a.point, r.b.point])
     .reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(r.a.point, r.a.point));

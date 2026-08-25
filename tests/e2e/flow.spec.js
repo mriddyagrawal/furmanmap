@@ -324,11 +324,11 @@ test('the search bar keeps the chosen place, and the cross clears everything', a
   await expect(page.locator('#q-clear')).toBeHidden();
   await expect(page.locator('body')).toHaveAttribute('data-mode', 'browse');
   await expect(page.locator('#sheet')).not.toBeInViewport();
-  const drawn = await page.evaluate(() => {
-    const m = window.__wayfinder.map;
-    return m.queryRenderedFeatures({ layers: ['route-line', 'pin-dot'] }).length;
-  });
-  expect(drawn, 'no pin or route left behind').toBe(0);
+  const left = await page.evaluate(() => ({
+    route: window.__wayfinder.map.queryRenderedFeatures({ layers: ['route-line'] }).length,
+    highlighted: window.__wayfinder.highlighted.length
+  }));
+  expect(left, 'no route or highlighted building left behind').toEqual({ route: 0, highlighted: 0 });
 });
 
 test('tapping a building on the map also fills the search bar', async ({ page }) => {
@@ -350,4 +350,37 @@ test('tapping a building on the map also fills the search bar', async ({ page })
   // However a place is chosen, the bar and the map must agree on what it is.
   await expect(page.locator('#q')).toHaveValue(/duke/i);
   await expect(page.locator('#q-clear')).toBeVisible();
+});
+
+test('selecting a place lights up the whole building', async ({ page }) => {
+  await ready(page);
+  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 20000 });
+  await page.fill('#q', 'duke');
+  await page.locator('#suggest li:not(.here)').first().click();
+
+  const sel = await page.evaluate(() => {
+    const w = window.__wayfinder;
+    const chosen = w.places.find(p => p.id === w.highlighted[0]);
+    return { count: w.highlighted.length, name: chosen && chosen.properties.name };
+  });
+  expect(sel.count, 'exactly one building highlighted').toBe(1);
+  expect(sel.name).toMatch(/duke/i);
+
+  // And it is genuinely painted, not just filtered in the abstract.
+  await expect.poll(() => page.evaluate(() =>
+    window.__wayfinder.map.queryRenderedFeatures({ layers: ['buildings-selected'] }).length),
+    { timeout: 10000 }).toBeGreaterThan(0);
+});
+
+test('directions lights both ends when both are buildings', async ({ page }) => {
+  await ready(page);
+  await page.fill('#q', 'duke');
+  await page.locator('#suggest li:not(.here)').first().click();
+  await page.locator('#p-directions').click();
+  await page.locator('#f-from').click();
+  await page.fill('#q', 'riley');
+  await page.locator('#suggest li:not(.here)').first().click();
+
+  await expect.poll(() => page.evaluate(() => window.__wayfinder.highlighted.length),
+    { timeout: 10000 }).toBe(2);
 });
