@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · progress';
+const BUILD = '2026-08-25 · timed-ease';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -501,8 +501,20 @@ function onOrientation(e) {
 // navigation, or re-centring after a pan — should read as a deliberate sweep,
 // so it eases slowly. Once the camera is on station, following the dot wants to
 // be brisk or it lags behind you.
-const CAM_EASE_SWEEP = 0.045;          // large change: roughly 1.2s
+//
+// Both are expressed per 60fps frame and then converted against the real time
+// elapsed. Applying a per-frame fraction directly ties the animation's duration
+// to the frame rate: at 15fps the same sweep takes four times as long in
+// wall-clock terms, which on a weak GPU is the difference between a 1.2s move
+// and a five-second crawl.
+const CAM_EASE_SWEEP = 0.045;          // large change: roughly 1.2s at 60fps
 const CAM_EASE_FOLLOW = 0.16;
+const FRAME_MS = 1000 / 60;
+
+/* Convert a per-frame easing fraction into one for the time actually elapsed. */
+function easeFor(rate, dt) {
+  return 1 - Math.pow(1 - rate, Math.min(dt, 100) / FRAME_MS);
+}
 const lerp = (a, b, k) => a + (b - a) * k;
 const lerpAngle = (a, b, k) => {
   let d = ((b - a) % 360 + 540) % 360 - 180;   // shortest way round
@@ -523,8 +535,10 @@ function cameraTarget() {
 
 function startCameraLoop() {
   if (state.raf) return;
-  state.raf = requestAnimationFrame(() => {
+  state.raf = requestAnimationFrame(now => {
     state.raf = null;
+    const dt = state.lastFrame ? now - state.lastFrame : FRAME_MS;
+    state.lastFrame = now;
     let busy = false;
 
     if (state.headingTarget != null) {
@@ -542,7 +556,7 @@ function startCameraLoop() {
       });
       const far = metres(c.center, t.center) > 25 || Math.abs(c.pitch - t.pitch) > 6
                || Math.abs(c.zoom - t.zoom) > 0.6 || Math.abs(c.padTop - t.padTop) > 40;
-      const k = far ? CAM_EASE_SWEEP : CAM_EASE_FOLLOW;
+      const k = easeFor(far ? CAM_EASE_SWEEP : CAM_EASE_FOLLOW, dt);
 
       c.center = [lerp(c.center[0], t.center[0], k), lerp(c.center[1], t.center[1], k)];
       c.zoom    = lerp(c.zoom, t.zoom, k);
@@ -562,6 +576,7 @@ function startCameraLoop() {
 
     moveCone();
     if (busy) startCameraLoop();
+    else state.lastFrame = null;      // next start measures from its own first frame
   });
 }
 
