@@ -147,7 +147,15 @@ body[data-mode="place"]      .pane-place { display: flex; }
 body[data-mode="directions"] .pane-dir   { display: flex; }
 body[data-mode="nav"]        .pane-nav   { display: flex; }
 
-#sheet h2 { margin: 0; font-size: 20px; line-height: 1.25; }
+/* The one display moment: a place name is short, large enough for a display
+   face to stay legible, and the only text where brand character is worth any
+   bytes. Everything else stays on the system stack, which is hinted for small
+   sizes and costs nothing. */
+#sheet h2 {
+  margin: 0; font-size: 21px; line-height: 1.22; font-weight: 400;
+  font-family: 'Abril Fatface', Georgia, 'Times New Roman', serif;
+  letter-spacing: .004em;
+}
 .sub { margin: 0; font-size: 13px; color: var(--ink-soft); }
 .sub.warn { color: var(--warn); }
 .figure { margin: 0; display: flex; align-items: baseline; gap: 8px; }
