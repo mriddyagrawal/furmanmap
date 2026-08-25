@@ -96,6 +96,8 @@ html, body {
   display: flex; align-items: baseline; gap: 4px; flex-direction: column;
   padding: 10px 12px; border-radius: 10px; cursor: pointer;
 }
+#suggest li.here { flex-direction: row; align-items: center; gap: 9px; font-weight: 600; }
+#suggest li.here .pip { width: 10px; height: 10px; border-radius: 50%; background: var(--dot); }
 #suggest li:hover, #suggest li[aria-selected="true"] { background: var(--selected); color: var(--on-selected); }
 #suggest .sub { margin: 0; }
 
@@ -208,6 +210,11 @@ body[data-mode="directions"] #suggest,
 body[data-mode="nav"]        #suggest { display: none; }
 body[data-mode="browse"] #endpoints,
 body[data-mode="place"]  #endpoints { display: none; }
+
+/* Choosing an endpoint keeps the endpoints on screen above the search box, so
+   the half-built route stays visible instead of being replaced by a text field. */
+body[data-mode="picking"] #sheet { transform: translateY(101%); }
+body[data-mode="picking"] #top { flex-direction: column-reverse; }
 /* Navigating: keep the endpoints visible but out of the way of the road ahead. */
 body[data-mode="nav"] #endpoints { opacity: .96; }
 
