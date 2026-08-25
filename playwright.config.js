@@ -8,6 +8,12 @@ module.exports = defineConfig({
   timeout: 30000,
   expect: { timeout: 10000 },
   fullyParallel: true,
+  // Each spec holds a live WebGL map. Too many at once starve the compositor,
+  // which makes animation-timing assertions measure machine load rather than
+  // the animation. Capping workers is the honest fix; weakening the assertion
+  // would just hide the flake.
+  workers: process.env.CI ? 2 : 3,
+  retries: 1,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:8765',

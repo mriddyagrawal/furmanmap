@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · camera';
+const BUILD = '2026-08-25 · progress';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -36,7 +36,7 @@ const nameOf = f => f && (f.name || (f.properties && f.properties.name)) || null
 function setMode(mode) {
   state.mode = mode;
   document.body.dataset.mode = mode;
-  if (mode !== 'browse') hideSuggestions();
+  if (mode !== 'browse' && mode !== 'picking') hideSuggestions();
   measureSheet();
 }
 
@@ -152,6 +152,7 @@ function addLayers(map, buildings, boundary) {
     data: { type: 'FeatureCollection', features: buildings.features.filter(f => f.properties.on_campus) }
   });
   map.addSource('route', { type: 'geojson', data: empty() });
+  map.addSource('route-done', { type: 'geojson', data: empty() });
   map.addSource('leader', { type: 'geojson', data: empty() });
   map.addSource('pin', { type: 'geojson', data: empty() });
 
@@ -169,6 +170,10 @@ function addLayers(map, buildings, boundary) {
 
   map.addLayer({ id: 'leader-line', type: 'line', source: 'leader',
     paint: { 'line-color': '#582C83', 'line-width': 2.5, 'line-dasharray': [1, 1.6], 'line-opacity': .75 } });
+  // Drawn first so the live route paints over it where they meet.
+  map.addLayer({ id: 'route-done-line', type: 'line', source: 'route-done',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#9a94a8', 'line-width': 5, 'line-opacity': .55 } });
   map.addLayer({ id: 'route-casing', type: 'line', source: 'route',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': '#fff', 'line-width': 10, 'line-opacity': .95 } });
@@ -198,23 +203,64 @@ function wireSearch() {
 
 function showSuggestions(term) {
   const list = $('suggest');
-  if (!term) return hideSuggestions();
+  const picking = state.mode === 'picking';
+  // Offer the user's own position as a first-class choice. Without it the only
+  // way to start a route from where you are is to guess that the locate button
+  // must be pressed first, which is not a thing anyone should have to know.
+  const here = picking
+    ? `<li role="option" class="here" data-here="1"><i class="pip"></i>Your location</li>` : '';
+  if (!term) {
+    if (!here) return hideSuggestions();
+    list.innerHTML = here;
+    list.hidden = false;
+    return bindSuggestions();
+  }
   const hits = state.fuse.search(term, { limit: 8 });
-  if (!hits.length) return hideSuggestions();
-  list.innerHTML = hits.map(h => {
+  if (!hits.length && !here) return hideSuggestions();
+  list.innerHTML = here + hits.map(h => {
     const p = h.item.properties;
     const kind = p.amenity || (p.building && p.building !== 'yes' ? p.building : 'building');
     return `<li role="option" data-id="${h.item.id}">${p.name}
       <span class="sub">${String(kind).replace(/_/g, ' ')}</span></li>`;
   }).join('');
   list.hidden = false;
-  list.querySelectorAll('li').forEach(li => li.onclick = () => {
-    const f = state.places.find(x => x.id === li.dataset.id);
-    if (!f) return;
-    if (state.mode === 'directions') setEndpoint(state.editing, f);
-    else selectPlace(f, { fly: true });
-    $('q').value = ''; $('q-clear').hidden = true; hideSuggestions(); $('q').blur();
+  bindSuggestions();
+}
+
+function bindSuggestions() {
+  $('suggest').querySelectorAll('li').forEach(li => li.onclick = () => {
+    const picking = state.mode === 'picking';
+    if (li.dataset.here) {
+      chooseMyLocation(state.editing);
+    } else {
+      const f = state.places.find(x => x.id === li.dataset.id);
+      if (!f) return;
+      if (picking) setEndpoint(state.editing, f);
+      else return selectPlace(f, { fly: true }), tidySearch();
+    }
+    tidySearch();
+    if (picking) { setMode('directions'); refreshEndpoints(); route(); }
   });
+}
+
+function tidySearch() {
+  $('q').value = ''; $('q-clear').hidden = true; hideSuggestions(); $('q').blur();
+  $('q').placeholder = 'Search Furman';
+}
+
+/* Picking "Your location" asks for a fix if we do not have one, rather than
+   failing quietly and leaving the field empty. */
+function chooseMyLocation(which) {
+  if (which === 'to') {
+    state.to = state.here ? { name: 'Your location', point: state.here } : null;
+  } else {
+    state.usingMyLocation = true;
+    if (state.here) useMyLocationAsStart();
+  }
+  if (!state.here) {
+    if (window.isSecureContext && !state.tracking) state.geo.trigger();
+    note('Finding your location…');
+  }
 }
 const hideSuggestions = () => { $('suggest').hidden = true; };
 
@@ -322,7 +368,10 @@ function route() {
   if (!r) {
     setSource('route', empty());
     setSource('leader', empty());
-    $('d-eta').innerHTML = '<strong>—</strong><span>pick both ends</span>';
+    const missing = !state.from && !state.to ? 'pick a start and a destination'
+                  : !state.from ? 'choose a starting point'
+                  : 'choose a destination';
+    $('d-eta').innerHTML = `<strong>—</strong><span>${missing}</span>`;
     $('d-note').textContent = '';
     $('d-go').disabled = true;
     return;
@@ -362,6 +411,7 @@ function startNav() {
 }
 
 function stopNav() {
+  setSource('route-done', empty());
   state.cam = null;
   state.following = false;
   $('fab-locate').classList.remove('recenter');
@@ -374,6 +424,7 @@ function navTick() {
   if (state.mode !== 'nav' || !state.route || !state.here) return;
   const { along, offBy, left } = progressAlong(state.route.line, state.route.total, state.here);
   const done = left < ARRIVED_M;
+  paintProgress(along);
   $('n-eta').innerHTML = done
     ? '<strong>Arrived</strong><span></span>'
     : `<strong>${fmtMins(left)}</strong><span>${fmtDist(left)} left</span>`;
@@ -386,6 +437,18 @@ function navTick() {
     if (state.heading == null) state.heading = state.headingTarget;
   }
   startCameraLoop();
+}
+
+/* Split the drawn route at the walked point: grey behind, purple ahead. Without
+   this the line looks identical after ten minutes of walking, which gives no
+   sense of progress at all. */
+function paintProgress(along) {
+  const { line, total } = state.route;
+  const head = Math.max(0, Math.min(along, total));
+  setSource('route-done', head > 1
+    ? turf.lineSliceAlong(line, 0, head, { units: 'meters' }) : empty());
+  setSource('route', head < total - 1
+    ? turf.lineSliceAlong(line, head, total, { units: 'meters' }) : empty());
 }
 
 /* ---------- compass ---------- */
@@ -434,7 +497,12 @@ function onOrientation(e) {
  * jumpTo, not easeTo: we are already interpolating, and a second animation on
  * top of this one only fights it.
  */
-const CAM_EASE = 0.12;                 // ~500ms to settle a large change
+// Two rates, because one number cannot serve both jobs. A big move — entering
+// navigation, or re-centring after a pan — should read as a deliberate sweep,
+// so it eases slowly. Once the camera is on station, following the dot wants to
+// be brisk or it lags behind you.
+const CAM_EASE_SWEEP = 0.045;          // large change: roughly 1.2s
+const CAM_EASE_FOLLOW = 0.16;
 const lerp = (a, b, k) => a + (b - a) * k;
 const lerpAngle = (a, b, k) => {
   let d = ((b - a) % 360 + 540) % 360 - 180;   // shortest way round
@@ -472,12 +540,15 @@ function startCameraLoop() {
         center: state.map.getCenter().toArray(), zoom: state.map.getZoom(),
         pitch: state.map.getPitch(), bearing: state.map.getBearing(), padTop: 0
       });
-      c.center = [lerp(c.center[0], t.center[0], CAM_EASE),
-                  lerp(c.center[1], t.center[1], CAM_EASE)];
-      c.zoom    = lerp(c.zoom, t.zoom, CAM_EASE);
-      c.pitch   = lerp(c.pitch, t.pitch, CAM_EASE);
-      c.padTop  = lerp(c.padTop, t.padTop, CAM_EASE);
-      c.bearing = lerpAngle(c.bearing, t.bearing, CAM_EASE);
+      const far = metres(c.center, t.center) > 25 || Math.abs(c.pitch - t.pitch) > 6
+               || Math.abs(c.zoom - t.zoom) > 0.6 || Math.abs(c.padTop - t.padTop) > 40;
+      const k = far ? CAM_EASE_SWEEP : CAM_EASE_FOLLOW;
+
+      c.center = [lerp(c.center[0], t.center[0], k), lerp(c.center[1], t.center[1], k)];
+      c.zoom    = lerp(c.zoom, t.zoom, k);
+      c.pitch   = lerp(c.pitch, t.pitch, k);
+      c.padTop  = lerp(c.padTop, t.padTop, k);
+      c.bearing = lerpAngle(c.bearing, t.bearing, k);
 
       state.map.jumpTo({
         center: c.center, zoom: c.zoom, pitch: c.pitch, bearing: c.bearing,
@@ -542,23 +613,16 @@ function wireControls() {
   for (const w of ['from', 'to']) {
     $(`f-${w}`).onclick = () => {
       state.editing = w;
+      setMode('picking');
       refreshEndpoints();
-      // Reuse the one search box: swap the header back and aim it at this field.
-      document.body.dataset.mode = 'browse';
+      $('q').value = '';
       $('q').placeholder = w === 'from' ? 'Choose starting point' : 'Choose destination';
       $('q').focus();
-      state.returnToDirections = true;
+      showSuggestions('');          // offers "Your location" straight away
     };
   }
 
-  $('q').addEventListener('blur', () => {
-    // Coming back from picking an endpoint, restore the directions header.
-    if (state.returnToDirections && !$('q').value) {
-      state.returnToDirections = false;
-      $('q').placeholder = 'Search Furman';
-      setMode('directions'); refreshEndpoints();
-    }
-  });
+  $('dir-back').addEventListener('click', () => { $('q').placeholder = 'Search Furman'; });
 
   $('fab-locate').onclick = () => {
     if (!window.isSecureContext) return note('Location needs an https:// address.');
