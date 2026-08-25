@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · access';
+const BUILD = '2026-08-25 · no-outline';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -214,6 +214,9 @@ function recolourBasemap(map) {
 }
 
 function addLayers(map, buildings, boundary) {
+  // The boundary is still needed as geometry — it is what the veil is cut
+  // from — but it is no longer drawn. A dashed outline and a veil were saying
+  // the same thing twice, and the veil says it without adding a line to read.
   map.addSource('boundary', { type: 'geojson', data: boundary });
 
   // Everything beyond the campus outline is veiled: a world-covering polygon
@@ -241,8 +244,6 @@ function addLayers(map, buildings, boundary) {
   map.addSource('route-done', { type: 'geojson', data: empty() });
   map.addSource('leader', { type: 'geojson', data: empty() });
 
-  map.addLayer({ id: 'boundary-line', type: 'line', source: 'boundary',
-    paint: { 'line-color': '#582C83', 'line-width': 1.4, 'line-opacity': .3, 'line-dasharray': [3, 2] } });
   // The colour is Furman purple; what was washing it out is the alpha. At .22
   // over a light base the result is only 7% saturated. Selection is carried by
   // opacity alone, so selected and unselected are the same hue at different
