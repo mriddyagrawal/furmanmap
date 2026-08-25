@@ -384,3 +384,23 @@ test('directions lights both ends when both are buildings', async ({ page }) => 
   await expect.poll(() => page.evaluate(() => window.__wayfinder.highlighted.length),
     { timeout: 10000 }).toBe(2);
 });
+
+test('the sheet has its own dismiss, matching the search bar cross', async ({ page }) => {
+  await ready(page);
+  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 20000 });
+  await page.fill('#q', 'riley');
+  await page.locator('#suggest li:not(.here)').first().click();
+  await expect(page.locator('#p-close')).toBeVisible();
+
+  await page.locator('#p-close').click();
+
+  // Same outcome as the search bar cross: text, selection and highlight gone.
+  await expect(page.locator('body')).toHaveAttribute('data-mode', 'browse');
+  await expect(page.locator('#q')).toHaveValue('');
+  await expect(page.locator('#sheet')).not.toBeInViewport();
+  expect(await page.evaluate(() => window.__wayfinder.highlighted.length)).toBe(0);
+
+  // But it must NOT raise the keyboard over the map it just revealed.
+  const focused = await page.evaluate(() => document.activeElement.id);
+  expect(focused, 'focus should not jump into the search field').not.toBe('q');
+});
