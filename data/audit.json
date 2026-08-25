@@ -1,13 +1,13 @@
 {
   "stats": {
-    "walkable_ways": 563,
-    "graph_nodes": 4337,
-    "graph_edges": 4700,
-    "network_km": 53.64,
-    "junctions": 704,
+    "walkable_ways": 558,
+    "graph_nodes": 4327,
+    "graph_edges": 4687,
+    "network_km": 53.57,
+    "junctions": 698,
     "dead_ends": 159,
     "components": 6,
-    "largest_component_nodes": 4236,
+    "largest_component_nodes": 4226,
     "largest_component_pct": 97.7,
     "orphan_islands": 5,
     "orphan_nodes": 101,
@@ -15,21 +15,21 @@
     "buildings": 82,
     "buildings_named": 59,
     "buildings_in_bbox": 516,
-    "entrances": 49,
+    "entrances": 47,
     "steps_ways": 12,
     "phase1_buildings_still_unnamed": [],
     "buildings_unnamed": 23,
     "buildings_uncategorised": 15
   },
   "whole_bbox": {
-    "walkable_ways": 1129,
-    "graph_nodes": 8746,
-    "graph_edges": 9253,
-    "network_km": 140.62,
-    "junctions": 1312,
+    "walkable_ways": 1124,
+    "graph_nodes": 8736,
+    "graph_edges": 9240,
+    "network_km": 140.54,
+    "junctions": 1306,
     "dead_ends": 516,
     "components": 19,
-    "largest_component_nodes": 7737,
+    "largest_component_nodes": 7727,
     "largest_component_pct": 88.5,
     "orphan_islands": 18,
     "orphan_nodes": 1009,
@@ -69,7 +69,7 @@
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/1425708674",
       "lat": 34.92699642,
-      "lon": -82.43890132
+      "lon": -82.43890131999999
     },
     {
       "name": null,
@@ -90,20 +90,20 @@
       "building": "dormitory",
       "osm": "https://www.openstreetmap.org/way/304036799",
       "lat": 34.92876506363637,
-      "lon": -82.43885497272727
+      "lon": -82.43885497272726
     },
     {
       "name": null,
       "building": "dormitory",
       "osm": "https://www.openstreetmap.org/way/304079106",
-      "lat": 34.92878016666666,
+      "lat": 34.92878016666667,
       "lon": -82.43856682222223
     },
     {
       "name": null,
       "building": "shed",
       "osm": "https://www.openstreetmap.org/way/304225506",
-      "lat": 34.919284520000005,
+      "lat": 34.91928452,
       "lon": -82.440684
     },
     {
@@ -118,28 +118,28 @@
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/304698333",
       "lat": 34.9238328,
-      "lon": -82.44442518
+      "lon": -82.44442518000001
     },
     {
       "name": null,
       "building": "dormitory",
       "osm": "https://www.openstreetmap.org/way/306150272",
       "lat": 34.9288283,
-      "lon": -82.43811081111112
+      "lon": -82.43811081111113
     },
     {
       "name": null,
       "building": "dormitory",
       "osm": "https://www.openstreetmap.org/way/306150273",
       "lat": 34.92881371333333,
-      "lon": -82.4391193
+      "lon": -82.43911929999999
     },
     {
       "name": null,
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/306150280",
-      "lat": 34.92895582,
-      "lon": -82.43944968000001
+      "lat": 34.928955820000006,
+      "lon": -82.43944968
     },
     {
       "name": null,
@@ -159,15 +159,15 @@
       "name": null,
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/59433955",
-      "lat": 34.923485185714284,
-      "lon": -82.44429307142856
+      "lat": 34.92348518571429,
+      "lon": -82.44429307142858
     },
     {
       "name": null,
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/59434039",
-      "lat": 34.925334375,
-      "lon": -82.43643174500001
+      "lat": 34.92533437499999,
+      "lon": -82.436431745
     },
     {
       "name": null,
@@ -187,7 +187,7 @@
       "name": null,
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/689246921",
-      "lat": 34.92132423636363,
+      "lat": 34.92132423636364,
       "lon": -82.44334185454545
     },
     {
@@ -201,14 +201,14 @@
       "name": null,
       "building": "detached",
       "osm": "https://www.openstreetmap.org/way/946155488",
-      "lat": 34.918923533333334,
-      "lon": -82.44108214444445
+      "lat": 34.91892353333334,
+      "lon": -82.44108214444447
     },
     {
       "name": null,
       "building": "university",
       "osm": "https://www.openstreetmap.org/way/976486682",
-      "lat": 34.92126202,
+      "lat": 34.92126202000001,
       "lon": -82.44489634
     }
   ],
@@ -231,22 +231,22 @@
       "name": "Guardhouse",
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/303491804",
-      "lat": 34.92532886,
-      "lon": -82.43467276999999
+      "lat": 34.92532885999999,
+      "lon": -82.43467277
     },
     {
       "name": "Place of Peace",
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/303958491",
-      "lat": 34.92816346666667,
+      "lat": 34.928163466666675,
       "lon": -82.43656404444444
     },
     {
       "name": "Cliffs Cottage",
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/306150263",
-      "lat": 34.92922752105263,
-      "lon": -82.43890930263157
+      "lat": 34.92922752105262,
+      "lon": -82.43890930263159
     },
     {
       "name": "Herring Center for Continuing Education",
@@ -280,7 +280,7 @@
       "name": "Furman Athletics",
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/59433965",
-      "lat": 34.92137916153846,
+      "lat": 34.921379161538454,
       "lon": -82.44404145384615
     },
     {
@@ -288,21 +288,21 @@
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/59433992",
       "lat": 34.917600547058825,
-      "lon": -82.440691
+      "lon": -82.44069099999999
     },
     {
       "name": "Minor Herndon Mickel Tennis Center",
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/59434004",
       "lat": 34.91907636521739,
-      "lon": -82.44237473913043
+      "lon": -82.44237473913044
     },
     {
       "name": "Alester G Furman Administration",
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/59434086",
-      "lat": 34.92540222,
-      "lon": -82.43661795
+      "lat": 34.92543882857143,
+      "lon": -82.43659321428572
     },
     {
       "name": "Montague Village",

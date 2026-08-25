@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · tuned';
+const BUILD = '2026-08-25 · access';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -505,8 +505,14 @@ function route() {
     return;
   }
   $('d-eta').innerHTML = `<strong>${fmtMins(r.metres)}</strong><span>${fmtDist(r.metres)}</span>`;
-  $('d-note').textContent = $('stepfree').checked && r.usesSteps
-    ? 'No fully step-free route exists — this one still uses stairs.' : '';
+  const notes = [];
+  if ($('stepfree').checked && r.usesSteps) {
+    notes.push('No fully step-free route exists — this one still uses stairs.');
+  }
+  if (r.restrictedMetres > 20) {
+    notes.push(`Uses about ${Math.round(r.restrictedMetres)} m of private roadway.`);
+  }
+  $('d-note').textContent = notes.join(' ');
   $('d-go').disabled = false;
 
   setSource('route', state.route.line);
