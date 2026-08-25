@@ -10,7 +10,7 @@ Emits three files into data/:
 
 Stdlib only, so CI needs no install step.
 """
-import json, os, sys
+import datetime, json, os, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "data", "campus.osm.json")
@@ -226,6 +226,19 @@ def main():
                                    nodes=refs),
                 "geometry": {"type": "LineString", "coordinates": coords},
             })
+
+    # A tiny file the app can read to say how fresh the map is. The date that
+    # matters to someone using it is when the OSM data was pulled, not when the
+    # code was built — the map is only as current as its last refresh.
+    meta = {
+        "generated": datetime.datetime.now(datetime.timezone.utc)
+                             .strftime("%Y-%m-%d"),
+        "buildings": len(buildings), "paths": len(paths),
+        "entrances": len(entrances),
+    }
+    with open(os.path.join(ROOT, "data", "meta.json"), "w") as fh:
+        json.dump(meta, fh)
+    print("%-20s %s" % ("meta.json", meta["generated"]))
 
     for name, feats in (("buildings", buildings), ("paths", paths),
                         ("entrances", entrances)):
