@@ -160,3 +160,61 @@ test('back from directions returns to the place, not a blank screen', async ({ p
   await expect(page.locator('body')).toHaveAttribute('data-mode', 'place');
   await expect(page.locator('#p-name')).toContainText(/duke/i);
 });
+
+test('Go is offered from the place sheet once a route exists', async ({ page, context }) => {
+  // A usable route is a state, not the last step of a sequence: if one exists,
+  // you can start it without walking through the directions screen first.
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation(MALL);
+  await ready(page);
+  await page.locator('#fab-locate').click();
+  await page.fill('#q', 'duke');
+  await page.locator('#suggest li').first().click();
+
+  await expect(page.locator('#p-go')).toBeVisible();
+  await page.locator('#p-go').click();
+  await expect(page.locator('body')).toHaveAttribute('data-mode', 'nav');
+});
+
+test('with no location there is no Go, because there is no route', async ({ page }) => {
+  await ready(page);
+  await page.fill('#q', 'duke');
+  await page.locator('#suggest li').first().click();
+  await expect(page.locator('#p-go')).toBeHidden();
+  await expect(page.locator('#p-directions')).toBeVisible();
+});
+
+test('entering navigation tilts gradually, it does not snap', async ({ page, context }) => {
+  // The camera used to pass zoom and pitch to jumpTo as constants, so the whole
+  // tilt happened in one frame. Sampling pitch proves it now passes through
+  // intermediate values rather than teleporting from flat to 55 degrees.
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation(MALL);
+  await ready(page);
+  await page.locator('#fab-locate').click();
+  await page.fill('#q', 'plyler');
+  await page.locator('#suggest li').first().click();
+  await page.locator('#p-directions').click();
+  await expect(page.locator('#d-go')).toBeEnabled();
+
+  // Sample on a timer rather than per animation frame. Several workers each
+  // holding a WebGL context starve requestAnimationFrame, so a frame-counting
+  // assertion measures machine load as much as it measures the animation.
+  const samples = await page.evaluate(async () => {
+    const map = window.__wayfinder.map;
+    const out = [];
+    const id = setInterval(() => out.push(Math.round(map.getPitch() * 10) / 10), 12);
+    document.getElementById('d-go').click();
+    await new Promise(r => setTimeout(r, 1500));
+    clearInterval(id);
+    return out;
+  });
+
+  // A snap produces two values: flat, then 55. An eased transition passes
+  // through many. Distinct values are the property that load cannot fake.
+  const distinct = [...new Set(samples.filter(p => p > 2 && p < 50))];
+  expect(distinct.length,
+    `pitch ${samples[0]} -> ${samples.at(-1)} through ${distinct.length} distinct intermediate values`)
+    .toBeGreaterThan(2);
+  expect(samples.at(-1), 'and still arrives tilted').toBeGreaterThan(45);
+});
