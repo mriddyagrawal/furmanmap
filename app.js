@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · palette';
+const BUILD = '2026-08-25 · tuned';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -165,7 +165,13 @@ function flushPending() {
   state.pending = null;
 }
 
-/* Positron is CARTO's data-visualisation basemap: deliberately desaturated so
+/* Categories are separated by perceptual difference (CIE deltaE), not by
+ * luminance contrast. WCAG contrast measures lightness alone, so it scores a
+ * light green against a light beige at 1.07:1 and calls them identical when
+ * they read as obviously different — deltaE puts that same pair at 18.7. Every
+ * adjacent pair here clears deltaE 8, which is noticeable at a glance.
+ *
+ * Positron is CARTO's data-visualisation basemap: deliberately desaturated so
  * thematic overlays dominate it. That is a principled design — Imhof's rule
  * that base colours stay light and neutral, with saturation reserved for small
  * areas of emphasis — but it is built for choropleths, not for walking.
@@ -180,12 +186,12 @@ function flushPending() {
  * and giving water an actual blue.
  */
 const PALETTE = [
-  [/water|lake|ocean|sea|reservoir/, '#7cb8de'],
-  [/waterway|river|stream|canal/,    '#7cb8de'],
-  [/wood|forest/,                    '#b6d7a0'],
-  [/park|cemetery|pitch|playground/, '#cfe6bd'],
-  [/grass|meadow|farmland|scrub/,    '#e3f2d6'],
-  [/sand|beach/,                     '#f0e6c8'],
+  [/water|lake|ocean|sea|reservoir/, '#9ed3ef'],
+  [/waterway|river|stream|canal/,    '#9ed3ef'],
+  [/wood|forest/,                    '#bfdcac'],
+  [/park|cemetery|pitch|playground/, '#d8ecc6'],
+  [/grass|meadow|farmland|scrub/,    '#ecf7e2'],
+  [/sand|beach/,                     '#f2e9d2'],
   [/building/,                       '#ddd6cc'],
   [/residential|landuse/,            '#f0ede7'],
 ];
@@ -209,6 +215,16 @@ function recolourBasemap(map) {
 
 function addLayers(map, buildings, boundary) {
   map.addSource('boundary', { type: 'geojson', data: boundary });
+
+  // Everything beyond the campus outline is veiled: a world-covering polygon
+  // with the boundary punched out of it. Off-campus detail still reads for
+  // orientation, but stops competing with the place the map is actually about.
+  // Added first, so every campus layer draws over it.
+  try {
+    map.addSource('offcampus', { type: 'geojson', data: turf.mask(boundary.features[0]) });
+    map.addLayer({ id: 'offcampus-veil', type: 'fill', source: 'offcampus',
+      paint: { 'fill-color': '#f7f6f3', 'fill-opacity': .55 } });
+  } catch (e) { console.warn('no campus boundary to veil against', e); }
   // MapLibre coerces a non-numeric GeoJSON feature id to 0 when it builds its
   // internal tiles, so e.features[0].id came back as 0 for every building and
   // the click handler's lookup never matched. Carrying the id in properties as
@@ -227,8 +243,12 @@ function addLayers(map, buildings, boundary) {
 
   map.addLayer({ id: 'boundary-line', type: 'line', source: 'boundary',
     paint: { 'line-color': '#582C83', 'line-width': 1.4, 'line-opacity': .3, 'line-dasharray': [3, 2] } });
+  // The colour is Furman purple; what was washing it out is the alpha. At .22
+  // over a light base the result is only 7% saturated. Selection is carried by
+  // opacity alone, so selected and unselected are the same hue at different
+  // strengths rather than two different colours.
   map.addLayer({ id: 'buildings-fill', type: 'fill', source: 'buildings',
-    paint: { 'fill-color': '#582C83', 'fill-opacity': ['case', ['has', 'name'], .22, .1] } });
+    paint: { 'fill-color': '#582C83', 'fill-opacity': ['case', ['has', 'name'], .34, .16] } });
   map.addLayer({ id: 'buildings-line', type: 'line', source: 'buildings',
     paint: { 'line-color': '#582C83', 'line-width': .7, 'line-opacity': .45 } });
   // Selection is drawn as its own filtered pass over the same source, rather
@@ -236,7 +256,7 @@ function addLayers(map, buildings, boundary) {
   // whole building collection on every tap is not.
   map.addLayer({ id: 'buildings-selected', type: 'fill', source: 'buildings',
     filter: ['in', ['get', 'fid'], ['literal', []]],
-    paint: { 'fill-color': '#582C83', 'fill-opacity': .55 } });
+    paint: { 'fill-color': '#582C83', 'fill-opacity': .72 } });
   map.addLayer({ id: 'buildings-selected-line', type: 'line', source: 'buildings',
     filter: ['in', ['get', 'fid'], ['literal', []]],
     paint: { 'line-color': '#3d1d5c', 'line-width': 2.2 } });

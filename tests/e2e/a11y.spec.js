@@ -137,47 +137,75 @@ test('the chosen type actually reaches every control', async ({ page }) => {
 });
 
 test('the basemap distinguishes its categories, and water is blue', async ({ page }) => {
-  // Positron ships building and residential land at 1.00:1 — identical — and
-  // water at 4% saturation. On a wayfinding map those are landmarks, so this
-  // asserts they stay told apart if the upstream style ever changes.
+  // Separation is measured as CIE deltaE, not WCAG contrast. WCAG compares
+  // lightness alone, so it rates a light green against a light beige at 1.07:1
+  // and calls them identical when they read as obviously different; deltaE puts
+  // that same pair at 18.7. Positron ships building and land at deltaE ~0 —
+  // genuinely the same colour — and water at 4% saturation, i.e. grey.
   await ready(page);
   await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 25000 });
 
-  const colours = await page.evaluate(() => {
+  const c = await page.evaluate(() => {
     const m = window.__wayfinder.map, out = {};
     for (const l of m.getStyle().layers) {
+      if (l.type !== 'fill' || l.id.startsWith('buildings-')) continue;
+      let v; try { v = m.getPaintProperty(l.id, 'fill-color'); } catch (e) { continue; }
+      if (typeof v !== 'string') continue;
       const id = l.id.toLowerCase();
-      if (id.startsWith('buildings-')) continue;
-      const prop = l.type === 'fill' ? 'fill-color' : null;
-      if (!prop) continue;
-      let c; try { c = m.getPaintProperty(l.id, prop); } catch (e) { continue; }
-      if (typeof c !== 'string') continue;
-      if (/^water$/.test(id)) out.water = c;
-      if (/^park$/.test(id)) out.park = c;
-      if (/^building$/.test(id)) out.building = c;
-      if (/residential/.test(id)) out.land = c;
+      if (id === 'water') out.water = v;
+      if (id === 'park') out.park = v;
+      if (id === 'building') out.building = v;
+      if (/residential/.test(id)) out.land = v;
     }
     return out;
   });
 
   const rgb = h => { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
-  const lum = c => { const v = c.map(x => x / 255).map(x => x <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4);
-                     return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; };
-  const ratio = (a, b) => { const [x, y] = [lum(rgb(a)), lum(rgb(b))]; return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
-  const sat = h => { const [r, g, b] = rgb(h); const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  const lab = h => {
+    let [r, g, b] = rgb(h).map(x => x / 255);
+    const f = x => x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4;
+    [r, g, b] = [f(r), f(g), f(b)];
+    let X = (r * .4124 + g * .3576 + b * .1805) / .95047;
+    let Y = r * .2126 + g * .7152 + b * .0722;
+    let Z = (r * .0193 + g * .1192 + b * .9505) / 1.08883;
+    const q = t => t > .008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+    [X, Y, Z] = [q(X), q(Y), q(Z)];
+    return [116 * Y - 16, 500 * (X - Y), 200 * (Y - Z)];
+  };
+  const dE = (a, b) => Math.hypot(...lab(a).map((v, i) => v - lab(b)[i]));
+  const sat = h => { const [r, g, b] = rgb(h), mx = Math.max(r, g, b), mn = Math.min(r, g, b);
                      return mx === 0 ? 0 : (mx - mn) / mx * 100; };
 
-  expect(colours.water, 'water layer found').toBeTruthy();
-  expect(sat(colours.water), `water is ${colours.water}, a lake should not be grey`).toBeGreaterThan(25);
-  const [r, g, b] = rgb(colours.water);
-  expect(b, 'and it should be blue, not just saturated').toBeGreaterThan(Math.max(r, g));
+  expect(c.water, 'water layer found').toBeTruthy();
+  expect(sat(c.water), `water is ${c.water}; a lake should not be grey`).toBeGreaterThan(20);
+  const [r, g, b] = rgb(c.water);
+  expect(b, 'and blue, not merely saturated').toBeGreaterThan(Math.max(r, g));
 
-  if (colours.building && colours.land) {
-    expect(ratio(colours.building, colours.land),
-      `building ${colours.building} vs land ${colours.land}`).toBeGreaterThan(1.12);
+  for (const [a, bb] of [['building', 'land'], ['park', 'land'], ['water', 'land']]) {
+    if (!c[a] || !c[bb]) continue;
+    expect(dE(c[a], c[bb]), `${a} ${c[a]} vs ${bb} ${c[bb]} is deltaE`).toBeGreaterThan(6);
   }
-  if (colours.park && colours.land) {
-    expect(ratio(colours.park, colours.land),
-      `park ${colours.park} vs land ${colours.land}`).toBeGreaterThan(1.10);
-  }
+});
+
+test('the world outside campus is veiled, and campus is not', async ({ page }) => {
+  await ready(page);
+  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 25000 });
+  const veil = await page.evaluate(() => {
+    const m = window.__wayfinder.map;
+    if (!m.getLayer('offcampus-veil')) return null;
+    const src = m.getSource('offcampus');
+    const d = src && src._data && (src._data.geojson || src._data);
+    return {
+      opacity: m.getPaintProperty('offcampus-veil', 'fill-opacity'),
+      // A mask is a world-covering ring with the campus punched out of it.
+      rings: d && d.geometry ? d.geometry.coordinates.length : 0,
+      // and it must sit under everything of ours
+      order: m.getStyle().layers.findIndex(l => l.id === 'offcampus-veil')
+             < m.getStyle().layers.findIndex(l => l.id === 'buildings-fill')
+    };
+  });
+  expect(veil, 'the veil layer exists').toBeTruthy();
+  expect(veil.rings, 'world ring plus a campus-shaped hole').toBeGreaterThan(1);
+  expect(veil.opacity).toBeGreaterThan(0.2);
+  expect(veil.order, 'campus draws over the veil, not under it').toBe(true);
 });
