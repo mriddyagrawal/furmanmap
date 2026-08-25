@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · timed-ease';
+const BUILD = '2026-08-25 · sticky-search';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -108,10 +108,16 @@ async function main() {
     addLayers(map, buildings, boundary);
     flushPending();
     map.on('click', 'buildings-fill', e => {
-      const f = state.places.find(b => b.id === e.features[0].id);
+      const fid = e.features[0].properties.fid;
+      const f = state.places.find(b => b.id === fid);
       if (f) selectPlace(f, { fly: false });
     });
-    map.on('mouseenter', 'buildings-fill', () => map.getCanvas().style.cursor = 'pointer');
+    // Only named buildings do anything when tapped, so only they should look
+    // tappable.
+    map.on('mousemove', 'buildings-fill', e => {
+      const named = !!e.features[0].properties.name;
+      map.getCanvas().style.cursor = named ? 'pointer' : '';
+    });
     map.on('mouseleave', 'buildings-fill', () => map.getCanvas().style.cursor = '');
     const stamp = `${BUILD} · ${state.places.length} places · `
                 + `${state.graph.size.toLocaleString()} path nodes`;
@@ -147,9 +153,17 @@ function flushPending() {
 
 function addLayers(map, buildings, boundary) {
   map.addSource('boundary', { type: 'geojson', data: boundary });
+  // MapLibre coerces a non-numeric GeoJSON feature id to 0 when it builds its
+  // internal tiles, so e.features[0].id came back as 0 for every building and
+  // the click handler's lookup never matched. Carrying the id in properties as
+  // well is what makes tap-to-select work at all.
   map.addSource('buildings', {
     type: 'geojson',
-    data: { type: 'FeatureCollection', features: buildings.features.filter(f => f.properties.on_campus) }
+    data: {
+      type: 'FeatureCollection',
+      features: buildings.features.filter(f => f.properties.on_campus)
+        .map(f => ({ ...f, properties: { ...f.properties, fid: f.id } }))
+    }
   });
   map.addSource('route', { type: 'geojson', data: empty() });
   map.addSource('route-done', { type: 'geojson', data: empty() });
@@ -198,7 +212,11 @@ function wireSearch() {
     showSuggestions(q.value.trim());
   });
   q.addEventListener('focus', () => { if (q.value.trim()) showSuggestions(q.value.trim()); });
-  $('q-clear').onclick = () => { q.value = ''; $('q-clear').hidden = true; hideSuggestions(); q.focus(); };
+  $('q-clear').onclick = clearSelection;
+
+  // Focusing a box that already holds a place selects it, so typing replaces
+  // the name rather than appending to it.
+  q.addEventListener('focus', () => { if (q.value) q.select(); });
 }
 
 function showSuggestions(term) {
@@ -236,16 +254,24 @@ function bindSuggestions() {
       const f = state.places.find(x => x.id === li.dataset.id);
       if (!f) return;
       if (picking) setEndpoint(state.editing, f);
-      else return selectPlace(f, { fly: true }), tidySearch();
+      else return selectPlace(f, { fly: true }), tidySearch(f.properties.name);
     }
     tidySearch();
     if (picking) { setMode('directions'); refreshEndpoints(); route(); }
   });
 }
 
-function tidySearch() {
-  $('q').value = ''; $('q-clear').hidden = true; hideSuggestions(); $('q').blur();
-  $('q').placeholder = 'Search Furman';
+/* After a selection the box keeps the chosen place, the way every maps app
+   does — it is the answer to "what am I looking at", and the cross beside it is
+   how you put the map back. Endpoint picking passes nothing, because there the
+   endpoint fields already show the value. */
+function tidySearch(keep) {
+  const q = $('q');
+  q.value = keep || '';
+  $('q-clear').hidden = !q.value;
+  hideSuggestions();
+  q.blur();
+  q.placeholder = 'Search Furman';
 }
 
 /* Picking "Your location" asks for a fix if we do not have one, rather than
@@ -264,6 +290,21 @@ function chooseMyLocation(which) {
 }
 const hideSuggestions = () => { $('suggest').hidden = true; };
 
+/* The cross undoes the whole search: the text, the selected place, the pin and
+   any route it produced. Clearing only the text would leave the map showing a
+   selection the search bar no longer names. */
+function clearSelection() {
+  state.to = null;
+  state.route = null;
+  setSource('pin', empty());
+  setSource('route', empty());
+  setSource('route-done', empty());
+  setSource('leader', empty());
+  tidySearch('');
+  setMode('browse');
+  $('q').focus();
+}
+
 /* ---------- place ---------- */
 
 function selectPlace(feature, { fly }) {
@@ -275,6 +316,9 @@ function selectPlace(feature, { fly }) {
   $('p-kind').textContent = String(kind).replace(/_/g, ' ');
   setMode('place');
   showPlaceEta();
+  // Keep the search bar in step with the map, however the place was chosen.
+  $('q').value = nameOf(feature) || '';
+  $('q-clear').hidden = !$('q').value;
   const c = centroid(feature.geometry);
   setSource('pin', turf.point(c));
   if (fly && state.map.loaded()) state.map.flyTo({ center: c, zoom: 17, duration: 700 });
@@ -615,8 +659,8 @@ function wireControls() {
     if (state.mode === 'nav') return stopNav();
     setSource('route', empty());
     setSource('leader', empty());
-    setMode(state.to ? 'place' : 'browse');
     if (state.to) selectPlace(state.to, { fly: false });
+    else clearSelection();
   };
 
   $('dir-swap').onclick = () => {
