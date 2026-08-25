@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-24 · outfit';
+const BUILD = '2026-08-25 · camera';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -241,6 +241,21 @@ function showPlaceEta() {
   $('p-eta').innerHTML = r
     ? `<strong>${fmtMins(r.metres)}</strong><span>${fmtDist(r.metres)} away</span>`
     : `<strong>—</strong><span>tap the locate button to measure from here</span>`;
+
+  // A usable route is a state, not the end of a sequence. If one exists, Go is
+  // offered here too rather than only after stepping through the directions
+  // screen — Directions stays available for changing either end.
+  if (r) {
+    state.route = { line: turf.lineString(r.line), total: r.metres, to: nameOf(state.to) };
+    setSource('route', state.route.line);
+    setSource('leader', { type: 'FeatureCollection', features: [
+      leg(r.a.point, r.line[0]), leg(r.line[r.line.length - 1], r.b.point)] });
+  } else {
+    state.route = null;
+    setSource('route', empty());
+    setSource('leader', empty());
+  }
+  $('p-go').hidden = !r;
 }
 
 /* ---------- directions ---------- */
@@ -339,6 +354,7 @@ function startNav() {
   if (!window.isSecureContext) return note('Navigation needs an https:// address.');
   setMode('nav');
   state.following = true;
+  state.cam = null;              // re-seed from the map's current pose
   $('n-to').textContent = `to ${state.route.to}`;
   if (!state.tracking) state.geo.trigger();
   startCompass();
@@ -346,8 +362,9 @@ function startNav() {
 }
 
 function stopNav() {
-  state.mapCenter = null;
+  state.cam = null;
   state.following = false;
+  $('fab-locate').classList.remove('recenter');
   setMode('directions');
   state.map.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 500 });
   route();
@@ -406,9 +423,36 @@ function onOrientation(e) {
 
 /* ---------- camera ---------- */
 
-/* One update per display frame, easing toward whatever the sensors last
-   reported, applied with jumpTo — we are already interpolating, so a second
-   animation on top of it only fights this one. */
+/* One update per display frame.
+ *
+ * Every camera property is interpolated — centre, zoom, pitch, bearing and
+ * padding. The previous version eased only centre and bearing and passed zoom
+ * and pitch as constants, so entering navigation slammed from a flat overview
+ * to a 55-degree tilt in one frame. The tilt arrived correctly and looked like
+ * a snap, which is exactly what was reported.
+ *
+ * jumpTo, not easeTo: we are already interpolating, and a second animation on
+ * top of this one only fights it.
+ */
+const CAM_EASE = 0.12;                 // ~500ms to settle a large change
+const lerp = (a, b, k) => a + (b - a) * k;
+const lerpAngle = (a, b, k) => {
+  let d = ((b - a) % 360 + 540) % 360 - 180;   // shortest way round
+  return (a + d * k + 360) % 360;
+};
+
+/* Where the camera wants to be, or null when the map is the user's to drive. */
+function cameraTarget() {
+  if (state.mode !== 'nav' || !state.following || !state.here) return null;
+  return {
+    center: state.here, zoom: 18, pitch: 55,
+    bearing: state.heading ?? state.map.getBearing(),
+    // Big top padding puts the dot low on screen, so most of the view is the
+    // path ahead rather than the path already walked.
+    padTop: Math.round(innerHeight * 0.42)
+  };
+}
+
 function startCameraLoop() {
   if (state.raf) return;
   state.raf = requestAnimationFrame(() => {
@@ -420,19 +464,31 @@ function startCameraLoop() {
       if (angleGap(state.heading, state.headingTarget) > 0.4) busy = true;
     }
 
-    if (state.mode === 'nav' && state.following && state.here) {
-      const c = state.mapCenter || state.here;
-      const k = 0.18;                                  // catches up over ~10 frames
-      state.mapCenter = [c[0] + (state.here[0] - c[0]) * k, c[1] + (state.here[1] - c[1]) * k];
-      state.map.jumpTo({
-        center: state.mapCenter, zoom: 18, pitch: 55,
-        bearing: state.heading ?? state.map.getBearing(),
-        // Big top padding puts the dot low on screen, so most of the view is
-        // the path ahead rather than the path already walked.
-        padding: { top: Math.round(innerHeight * 0.42), bottom: 0, left: 0, right: 0 }
+    const t = cameraTarget();
+    if (t) {
+      // Start from wherever the map actually is, so the first frame of a
+      // transition continues from the overview rather than teleporting.
+      const c = state.cam || (state.cam = {
+        center: state.map.getCenter().toArray(), zoom: state.map.getZoom(),
+        pitch: state.map.getPitch(), bearing: state.map.getBearing(), padTop: 0
       });
-      if (metres(state.mapCenter, state.here) > 0.5) busy = true;
+      c.center = [lerp(c.center[0], t.center[0], CAM_EASE),
+                  lerp(c.center[1], t.center[1], CAM_EASE)];
+      c.zoom    = lerp(c.zoom, t.zoom, CAM_EASE);
+      c.pitch   = lerp(c.pitch, t.pitch, CAM_EASE);
+      c.padTop  = lerp(c.padTop, t.padTop, CAM_EASE);
+      c.bearing = lerpAngle(c.bearing, t.bearing, CAM_EASE);
+
+      state.map.jumpTo({
+        center: c.center, zoom: c.zoom, pitch: c.pitch, bearing: c.bearing,
+        padding: { top: Math.round(c.padTop), bottom: 0, left: 0, right: 0 }
+      });
+
+      if (metres(c.center, t.center) > 0.5 || Math.abs(c.zoom - t.zoom) > 0.01 ||
+          Math.abs(c.pitch - t.pitch) > 0.2 || Math.abs(c.padTop - t.padTop) > 1 ||
+          angleGap(c.bearing, t.bearing) > 0.4) busy = true;
     }
+
     moveCone();
     if (busy) startCameraLoop();
   });
@@ -464,6 +520,7 @@ const note = msg => { $('d-note').textContent = msg; };
 
 function wireControls() {
   $('p-directions').onclick = openDirections;
+  $('p-go').onclick = startNav;
   $('d-go').onclick = startNav;
   $('n-stop').onclick = stopNav;
   $('stepfree').onchange = () => { route(); if (state.mode === 'place') showPlaceEta(); };
@@ -508,7 +565,11 @@ function wireControls() {
     if (!state.tracking) state.geo.trigger();
     state.usingMyLocation = true;
     if (state.here) { useMyLocationAsStart(); refreshEndpoints(); }
-    if (state.mode === 'nav') { state.following = true; startCameraLoop(); }
+    if (state.mode === 'nav') {
+      state.following = true; state.cam = null;
+      $('fab-locate').classList.remove('recenter');
+      startCameraLoop();
+    }
     if (state.mode === 'place') showPlaceEta();
     if (state.mode === 'directions') route();
   };
@@ -521,6 +582,7 @@ function wireControls() {
     state.map.on(ev, e => {
       if (state.mode !== 'nav' || !e.originalEvent) return;
       state.following = false;
+      $('fab-locate').classList.add('recenter');
     });
   }
 }

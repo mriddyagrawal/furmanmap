@@ -37,6 +37,12 @@
  * interface is fully legible before the webfont arrives, and stays legible if
  * it never does — font-display: swap means the first paint uses it. */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* The `hidden` attribute sets display:none from the UA stylesheet, which any
+ * author rule with a `display` beats — so `.btn { display: flex }` silently
+ * un-hides every hidden button. This is the one place !important is correct:
+ * hidden must mean hidden regardless of what else a selector says. */
+[hidden] { display: none !important; }
 html, body {
   margin: 0; height: 100%; overscroll-behavior: none;
   font: 15px/1.45 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -180,6 +186,14 @@ body[data-mode="nav"]        .pane-nav   { display: flex; }
 .btn.primary { background: var(--purple); border-color: var(--purple); color: var(--paper); }
 .btn.primary:hover { background: var(--purple-dim); border-color: var(--purple-dim); }
 .btn .icon { width: 18px; height: 18px; }
+
+.row-actions { display: flex; gap: 8px; }
+.row-actions .btn { flex: 1; }
+/* When the map is no longer following, the locate button IS the recenter
+   button — so make it look like the one thing worth pressing. */
+#fab-locate.recenter {
+  background: var(--purple); color: var(--paper); border-color: var(--purple);
+}
 
 .toggle { display: flex; align-items: center; gap: 9px; font-size: 15px; }
 .toggle input { accent-color: var(--purple); width: 18px; height: 18px; }
