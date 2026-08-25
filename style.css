@@ -142,6 +142,7 @@ html, body {
 
 #sheet {
   position: absolute; z-index: 4; left: 0; right: 0; bottom: 0;
+  /* anchors .sheet-close */
   background: var(--paper);
   border-radius: 18px 18px 0 0; box-shadow: var(--shadow);
   padding: 6px 16px calc(16px + env(safe-area-inset-bottom));
@@ -165,6 +166,15 @@ body[data-mode="nav"]        .pane-nav   { display: flex; }
    face to stay legible, and the only text where brand character is worth any
    bytes. Everything else stays on the system stack, which is hinted for small
    sizes and costs nothing. */
+/* Sits over the pane rather than in the flow, so the name can run the full
+   width and wrap under it instead of being squeezed into a narrower column. */
+.sheet-close {
+  position: absolute; top: 10px; right: 12px;
+  background: var(--field); color: var(--ink-soft);
+}
+.sheet-close:hover { background: var(--field-hover); }
+.pane-place h2 { padding-right: 44px; }
+
 #sheet h2 {
   margin: 0; font-size: 21px; line-height: 1.22; font-weight: 400;
   font-family: 'Abril Fatface', Georgia, 'Times New Roman', serif;

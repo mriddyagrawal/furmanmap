@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · highlight';
+const BUILD = '2026-08-25 · dismiss';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -231,7 +231,7 @@ function wireSearch() {
     showSuggestions(q.value.trim());
   });
   q.addEventListener('focus', () => { if (q.value.trim()) showSuggestions(q.value.trim()); });
-  $('q-clear').onclick = clearSelection;
+  $('q-clear').onclick = () => clearSelection({ focus: true });
 
   // Focusing a box that already holds a place selects it, so typing replaces
   // the name rather than appending to it.
@@ -312,7 +312,7 @@ const hideSuggestions = () => { $('suggest').hidden = true; };
 /* The cross undoes the whole search: the text, the selected place, its
    highlight and any route it produced. Clearing only the text would leave the
    map showing a selection the search bar no longer names. */
-function clearSelection() {
+function clearSelection(opts) {
   state.to = null;
   state.route = null;
   highlight([]);
@@ -321,7 +321,9 @@ function clearSelection() {
   setSource('leader', empty());
   tidySearch('');
   setMode('browse');
-  $('q').focus();
+  // Only pull focus into the field when the user cleared from the field. Doing
+  // it from the sheet would raise the keyboard over the map they just revealed.
+  if (opts && opts.focus) $('q').focus();
 }
 
 /* ---------- place ---------- */
@@ -668,6 +670,7 @@ function moveCone() {
 const note = msg => { $('d-note').textContent = msg; };
 
 function wireControls() {
+  $('p-close').onclick = clearSelection;
   $('p-directions').onclick = openDirections;
   $('p-go').onclick = startNav;
   $('d-go').onclick = startNav;
