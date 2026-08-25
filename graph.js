@@ -22,6 +22,17 @@
 // stairs" degrades to a longer route rather than stranding someone with none.
 const STEP_PENALTY = 12;
 
+// Furman maps sidewalks as separate ways alongside the roads they follow, so a
+// router that treats both alike will happily send someone down the middle of a
+// service drive when a footway runs parallel. A modest penalty on road-type
+// ways prefers the footway without refusing the road.
+const ROAD_TYPES = new Set(['service', 'residential', 'unclassified', 'tertiary',
+                            'secondary', 'primary', 'road', 'track']);
+const ROAD_PENALTY = 1.6;
+
+// access=private with no foot tag: avoid if there is any alternative.
+const RESTRICTED_PENALTY = 25;
+
 /* ---------- geometry (Turf) ---------- */
 
 const metres = (a, b) => turf.distance(a, b, { units: 'meters' });
@@ -44,14 +55,21 @@ function buildGraph(paths) {
   for (const f of paths) {
     const ids = f.properties.nodes, cs = f.geometry.coordinates;
     if (!ids || ids.length !== cs.length) continue;   // refs fell outside the bbox
-    const steps = f.properties.highway === 'steps';
+    const p = f.properties;
+    if (p.restriction === 'banned') continue;      // foot=no is not a preference
+    const steps = p.highway === 'steps';
+    // Comfort, not distance: the weight the router minimises is metres times
+    // how much we would rather someone did not walk here.
+    const restricted = p.restriction === 'discouraged';
+    const comfort = (ROAD_TYPES.has(p.highway) ? ROAD_PENALTY : 1)
+                  * (restricted ? RESTRICTED_PENALTY : 1);
     for (let i = 0; i < ids.length; i++) {
       coord.set(ids[i], cs[i]);
       graph.addNode(ids[i], { c: cs[i] });
     }
     for (let i = 0; i < ids.length - 1; i++) {
-      graph.addLink(ids[i], ids[i + 1],
-                    { w: metres(cs[i], cs[i + 1]), steps });
+      const m = metres(cs[i], cs[i + 1]);
+      graph.addLink(ids[i], ids[i + 1], { w: m, cost: m * comfort, steps, restricted });
     }
   }
 
@@ -80,11 +98,11 @@ function buildGraph(paths) {
 
 function finderFor(graph, avoidSteps) {
   return ngraphPath.aStar(graph, {
-    // Straight-line metres can never exceed a path measured in metres, so the
-    // heuristic is admissible and A* stays optimal.
+    // Straight-line metres can never exceed a path whose cost is at least its
+    // length, so the heuristic stays admissible and A* stays optimal.
     heuristic: (a, b) => metres(a.data.c, b.data.c),
     distance: (a, b, link) =>
-      link.data.w * (avoidSteps && link.data.steps ? STEP_PENALTY : 1),
+      link.data.cost * (avoidSteps && link.data.steps ? STEP_PENALTY : 1),
     oriented: false
   });
 }
@@ -100,14 +118,21 @@ function aStar(g, start, goal, avoidSteps) {
   if (nodes[0].id !== start) nodes = nodes.slice().reverse();
 
   const line = nodes.map(n => n.data.c);
-  let len = 0, steps = false;
+  let len = 0, cost = 0, steps = false, restricted = 0;
   for (let i = 0; i < nodes.length - 1; i++) {
     len += metres(line[i], line[i + 1]);
     g.graph.forEachLinkedNode(nodes[i].id, (other, link) => {
-      if (other.id === nodes[i + 1].id && link.data.steps) steps = true;
+      if (other.id !== nodes[i + 1].id) return;
+      cost += link.data.cost * (avoidSteps && link.data.steps ? STEP_PENALTY : 1);
+      if (link.data.steps) steps = true;
+      if (link.data.restricted) restricted += link.data.w;
     });
   }
-  return { line, metres: len, usesSteps: steps };
+  // `metres` is the real walk; `cost` is what the router minimised. They differ
+  // because a footway is cheaper per metre than the road beside it.
+  // restrictedMetres is surfaced, not hidden: if the only way through is a
+  // private drive, the person walking it should know before they set off.
+  return { line, metres: len, cost, usesSteps: steps, restrictedMetres: restricted };
 }
 
 /* ---------- heading ---------- */

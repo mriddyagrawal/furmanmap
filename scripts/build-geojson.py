@@ -17,6 +17,12 @@ SRC = os.path.join(ROOT, "data", "campus.osm.json")
 
 # Ways a person can walk along. Everything else (motorway, raceway...) is kept
 # in the file but flagged walkable=False so we can still draw roads.
+#
+# Type is only half the question: OSM records access on a separate axis, so a
+# perfectly ordinary service road can be someone's private drive. Routing over
+# those sends people through places they may not walk.
+BLOCKED_ACCESS = {"private", "no", "customers", "permit"}
+
 WALKABLE = {
     "footway", "path", "steps", "pedestrian", "cycleway", "track", "corridor",
     "service", "residential", "living_street", "unclassified", "tertiary",
@@ -31,6 +37,31 @@ KEEP = ("name", "alt_name", "short_name", "building", "amenity", "highway",
 
 def keep_tags(tags):
     return {k: v for k, v in tags.items() if k in KEEP}
+
+
+def is_walkable(tags):
+    """Only the type decides walkability. Permission is graded, not binary."""
+    return tags.get("highway") in WALKABLE
+
+
+def restriction(tags):
+    """How discouraged is this way on foot?
+
+    `foot=no` is a genuine ban and the router must not use it. `access=private`
+    without a `foot` tag is ambiguous on a campus, where it usually means "no
+    public vehicles" rather than "no pedestrians" — excluding those outright
+    stranded 145 nodes people plainly do walk to. They are penalised instead, so
+    a route avoids them when an alternative exists and still exists when none
+    does, which is the same treatment stairs get.
+    """
+    foot = tags.get("foot")
+    if foot in ("no", "private"):
+        return "banned"
+    if foot in ("yes", "designated", "permissive"):
+        return None                       # explicit foot access settles it
+    if tags.get("access") in BLOCKED_ACCESS:
+        return "discouraged"
+    return None
 
 
 def rings_from_members(members, role):
@@ -189,7 +220,8 @@ def main():
                 "type": "Feature",
                 "id": "w%d" % e["id"],
                 "properties": dict(keep_tags(tags),
-                                   walkable=tags["highway"] in WALKABLE,
+                                   walkable=is_walkable(tags),
+                                   restriction=restriction(tags),
                                    on_campus=on_campus(coords),
                                    nodes=refs),
                 "geometry": {"type": "LineString", "coordinates": coords},

@@ -105,6 +105,10 @@ test('campus graph is one connected component', () => {
 test('A* is optimal — matches Dijkstra on real campus pairs', () => {
   // An inadmissible heuristic silently returns non-optimal routes that look
   // perfectly reasonable on a map. This is the only test that catches that.
+  //
+  // Both must minimise the SAME quantity. The router optimises comfort-weighted
+  // cost, not raw metres — a footway is preferred to a parallel service drive —
+  // so a Dijkstra run on raw length disagrees by design and proves nothing.
   const dijkstra = (start, goal) => {
     const dist = new Map([[start, 0]]), done = new Set();
     const q = [[0, start]];
@@ -116,17 +120,19 @@ test('A* is optimal — matches Dijkstra on real campus pairs', () => {
       if (id === goal) return d;
       graph.graph.forEachLinkedNode(id, (other, link) => {
         if (!graph.coord.has(other.id)) return;
-        const nd = d + link.data.w;
+        const nd = d + link.data.cost;
         if (nd < (dist.get(other.id) ?? Infinity)) { dist.set(other.id, nd); q.push([nd, other.id]); }
       });
     }
     return null;
   };
   for (const [a, b] of [['riley', 'duke'], ['trone', 'daniel chapel']]) {
-    const r = aStar(graph, nodeFor(a), nodeFor(b), false);
-    const d = dijkstra(nodeFor(a), nodeFor(b));
-    assert.ok(r && d, `${a} -> ${b} routes`);
-    assert.ok(Math.abs(r.metres - d) < 1, `${a}->${b}: A* ${r.metres} vs Dijkstra ${d}`);
+    const from = nodeFor(a), to = nodeFor(b);
+    const r = aStar(graph, from, to, false);
+    const best = dijkstra(from, to);
+    assert.ok(r && best, `${a} -> ${b} routes`);
+    assert.ok(Math.abs(r.cost - best) < 1,
+      `${a}->${b}: A* cost ${r.cost} vs Dijkstra cost ${best}`);
   }
 });
 
@@ -232,4 +238,54 @@ test('smoothing damps jitter rather than following it', () => {
   // A single spurious 90-degree spike must not swing the map 90 degrees.
   const moved = Math.abs(smoothHeading(0, 90) - 0);
   assert.ok(moved < 45, `one noisy reading moved the map ${moved.toFixed(1)} degrees`);
+});
+
+/* ---------- access and surface preference ---------- */
+
+test('routes prefer a footway over a road running beside it', () => {
+  // Furman maps sidewalks as separate ways alongside their roads, so without a
+  // preference the router sends people down the middle of service drives.
+  const A = [0, 0], B = [0, 0.0018];                 // ~200 m apart
+  const mid = [0, 0.0009];
+  const net = [
+    { properties: { nodes: ['a', 'r', 'b'], highway: 'service', walkable: true },
+      geometry: { type: 'LineString', coordinates: [A, mid, B] } },
+    // A footway that is deliberately LONGER, via a slight dogleg.
+    { properties: { nodes: ['a', 'f', 'b'], highway: 'footway', walkable: true },
+      geometry: { type: 'LineString', coordinates: [A, [0.00012, 0.0009], B] } },
+  ];
+  const g = buildGraph(net);
+  const r = aStar(g, 'a', 'b', false);
+  assert.ok(r, 'a route exists');
+  assert.deepStrictEqual(r.line[1], [0.00012, 0.0009],
+    'took the longer footway rather than the shorter road');
+});
+
+test('a way banned to pedestrians is not routed over at all', () => {
+  const A = [0, 0], B = [0, 0.0018];
+  const g = buildGraph([
+    { properties: { nodes: ['a', 'b'], highway: 'footway', walkable: true, restriction: 'banned' },
+      geometry: { type: 'LineString', coordinates: [A, B] } },
+  ]);
+  assert.strictEqual(aStar(g, 'a', 'b', false), null, 'foot=no is a ban, not a preference');
+});
+
+test('a discouraged way is avoided but still available as a last resort', () => {
+  // access=private with no foot tag is ambiguous on a campus. Excluding those
+  // outright stranded 145 nodes people plainly do walk to.
+  const A = [0, 0], B = [0, 0.0018];
+  const only = buildGraph([
+    { properties: { nodes: ['a', 'b'], highway: 'service', walkable: true, restriction: 'discouraged' },
+      geometry: { type: 'LineString', coordinates: [A, B] } },
+  ]);
+  assert.ok(aStar(only, 'a', 'b', false), 'still reachable when it is the only way');
+
+  const both = buildGraph([
+    { properties: { nodes: ['a', 'b'], highway: 'service', walkable: true, restriction: 'discouraged' },
+      geometry: { type: 'LineString', coordinates: [A, B] } },
+    { properties: { nodes: ['a', 'd', 'b'], highway: 'footway', walkable: true },
+      geometry: { type: 'LineString', coordinates: [A, [0.0004, 0.0009], B] } },
+  ]);
+  const r = aStar(both, 'a', 'b', false);
+  assert.strictEqual(r.line.length, 3, 'took the long way round rather than the private drive');
 });
