@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · logo';
+const BUILD = '2026-08-25 · carto';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -242,6 +242,17 @@ function addLayers(map, buildings, boundary) {
   // with the boundary punched out of it. Off-campus detail still reads for
   // orientation, but stops competing with the place the map is actually about.
   // Added first, so every campus layer draws over it.
+  // Both maps worth copying — UCSD's Esri build and CU Boulder's Concept3D one
+  // — tint the whole campus as a single area. That is what makes a campus read
+  // as a place rather than as a scatter of separate buildings, and it does more
+  // for legibility than any amount of colouring the buildings themselves.
+  // It has to sit at landuse level, underneath water and roads. Added on top —
+  // which is what a plain addLayer does — it painted straight over Furman Lake
+  // and every footpath, which is the opposite of helping someone navigate.
+  const firstWater = (map.getStyle().layers.find(l => /water/.test(l.id)) || {}).id;
+  map.addLayer({ id: 'campus-tint', type: 'fill', source: 'boundary',
+    paint: { 'fill-color': '#e8f0dc', 'fill-opacity': .8 } }, firstWater);
+
   try {
     map.addSource('offcampus', { type: 'geojson', data: turf.mask(boundary.features[0]) });
     map.addLayer({ id: 'offcampus-veil', type: 'fill', source: 'offcampus',
@@ -263,14 +274,16 @@ function addLayers(map, buildings, boundary) {
   map.addSource('route-done', { type: 'geojson', data: empty() });
   map.addSource('leader', { type: 'geojson', data: empty() });
 
-  // The colour is Furman purple; what was washing it out is the alpha. At .22
-  // over a light base the result is only 7% saturated. Selection is carried by
-  // opacity alone, so selected and unselected are the same hue at different
-  // strengths rather than two different colours.
+  // Buildings are deliberately quiet. Painting all five hundred of them in
+  // Furman purple left nothing able to stand out — the reference maps both keep
+  // buildings neutral and spend colour on area and emphasis instead. The purple
+  // is still there, drained most of the way to grey, so a selected building and
+  // the route have somewhere to be loud against.
   map.addLayer({ id: 'buildings-fill', type: 'fill', source: 'buildings',
-    paint: { 'fill-color': '#582C83', 'fill-opacity': ['case', ['has', 'name'], .34, .16] } });
+    paint: { 'fill-color': ['case', ['has', 'name'], '#b7abc0', '#cfc9d2'],
+             'fill-opacity': .95 } });
   map.addLayer({ id: 'buildings-line', type: 'line', source: 'buildings',
-    paint: { 'line-color': '#582C83', 'line-width': .7, 'line-opacity': .45 } });
+    paint: { 'line-color': '#9d8fab', 'line-width': .6, 'line-opacity': .7 } });
   // Selection is drawn as its own filtered pass over the same source, rather
   // than by mutating the data. Setting a filter is cheap; re-uploading the
   // whole building collection on every tap is not.
@@ -281,11 +294,23 @@ function addLayers(map, buildings, boundary) {
     filter: ['in', ['get', 'fid'], ['literal', []]],
     paint: { 'line-color': '#3d1d5c', 'line-width': 2.2 } });
 
-  map.addLayer({ id: 'buildings-label', type: 'symbol', source: 'buildings',
-    filter: ['has', 'name'], minzoom: 15.4,
-    layout: { 'text-field': ['get', 'name'], 'text-size': 11, 'text-max-width': 8,
-              'text-font': ['Noto Sans Regular'] },
-    paint: { 'text-color': '#3d1d5c', 'text-halo-color': '#fff', 'text-halo-width': 1.4 } });
+  // Every label the same size is why the map reads flat. Footprint area is a
+  // decent proxy for how much a building matters: Timmons Arena and Duke
+  // Library are the biggest on campus, the guardhouses the smallest. Big ones
+  // appear earlier and larger, so zooming out leaves the landmarks behind
+  // rather than an even wash of names.
+  map.addLayer({ id: 'buildings-label-major', type: 'symbol', source: 'buildings',
+    filter: ['all', ['has', 'name'], ['>=', ['get', 'area'], 1800]], minzoom: 14.6,
+    layout: { 'text-field': ['get', 'name'], 'text-max-width': 8,
+              'text-font': ['Noto Sans Bold'],
+              'text-size': ['interpolate', ['linear'], ['zoom'], 15, 11, 17, 13.5, 19, 15] },
+    paint: { 'text-color': '#38215c', 'text-halo-color': '#fff', 'text-halo-width': 1.6 } });
+  map.addLayer({ id: 'buildings-label-minor', type: 'symbol', source: 'buildings',
+    filter: ['all', ['has', 'name'], ['<', ['get', 'area'], 1800]], minzoom: 16.2,
+    layout: { 'text-field': ['get', 'name'], 'text-max-width': 8,
+              'text-font': ['Noto Sans Regular'],
+              'text-size': ['interpolate', ['linear'], ['zoom'], 16.2, 10, 19, 12] },
+    paint: { 'text-color': '#4b3a63', 'text-halo-color': '#fff', 'text-halo-width': 1.4 } });
 
   map.addLayer({ id: 'leader-line', type: 'line', source: 'leader',
     paint: { 'line-color': '#582C83', 'line-width': 2.5, 'line-dasharray': [1, 1.6], 'line-opacity': .75 } });

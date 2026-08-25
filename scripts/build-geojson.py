@@ -10,7 +10,7 @@ Emits three files into data/:
 
 Stdlib only, so CI needs no install step.
 """
-import datetime, json, os, sys
+import datetime, json, math, os, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "data", "campus.osm.json")
@@ -33,6 +33,22 @@ KEEP = ("name", "alt_name", "short_name", "building", "amenity", "highway",
         "surface", "wheelchair", "entrance", "access", "foot", "ref",
         "addr:housenumber", "addr:street", "operator", "incline",
         "handrail", "step_count", "covered", "tunnel", "bridge", "layer")
+
+
+def ring_area_m2(ring):
+    """Rough planar area. Only used to rank labels, so precision is irrelevant —
+    what matters is that Duke Library outranks a shed."""
+    if len(ring) < 4:
+        return 0.0
+    lat = sum(c[1] for c in ring) / len(ring)
+    kx = 111320.0 * math.cos(math.radians(lat))
+    ky = 110540.0
+    a = 0.0
+    for i in range(len(ring) - 1):
+        x1, y1 = ring[i][0] * kx, ring[i][1] * ky
+        x2, y2 = ring[i + 1][0] * kx, ring[i + 1][1] * ky
+        a += x1 * y2 - x2 * y1
+    return abs(a) / 2.0
 
 
 def keep_tags(tags):
@@ -191,7 +207,10 @@ def main():
                     "properties": dict(keep_tags(tags),
                                        on_campus=on_campus(geom["coordinates"][0]
                                                            if geom["type"] == "Polygon"
-                                                           else geom["coordinates"][0][0])),
+                                                           else geom["coordinates"][0][0]),
+                                       area=round(ring_area_m2(
+                                           geom["coordinates"][0] if geom["type"] == "Polygon"
+                                           else geom["coordinates"][0][0]))),
                     "geometry": geom,
                 })
             continue
@@ -212,7 +231,8 @@ def main():
             buildings.append({
                 "type": "Feature",
                 "id": "w%d" % e["id"],
-                "properties": dict(keep_tags(tags), on_campus=on_campus(ring)),
+                "properties": dict(keep_tags(tags), on_campus=on_campus(ring),
+                                   area=round(ring_area_m2(ring))),
                 "geometry": {"type": "Polygon", "coordinates": [ring]},
             })
         elif "highway" in tags:
