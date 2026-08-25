@@ -31,9 +31,12 @@ test('the map itself renders — WebGL, tiles, campus layers', async ({ page }) 
   await ready(page);
   await expect.poll(() => page.evaluate(() =>
     !!window.__wayfinder.map?.getLayer?.('buildings-fill')), { timeout: 20000 }).toBe(true);
-  const drawn = await page.evaluate(() =>
-    window.__wayfinder.map.queryRenderedFeatures({ layers: ['buildings-fill'] }).length);
-  expect(drawn, 'campus buildings are actually painted').toBeGreaterThan(0);
+  // Poll, do not sample once. A layer existing and its tiles being painted are
+  // different events, and asserting the moment the layer appears is a race that
+  // passes or fails on how fast the tiles happen to arrive.
+  await expect.poll(() => page.evaluate(() =>
+    window.__wayfinder.map.queryRenderedFeatures({ layers: ['buildings-fill'] }).length),
+    { timeout: 20000 }).toBeGreaterThan(0);
 });
 
 test('fuzzy search tolerates a typo and finds the building', async ({ page }) => {
