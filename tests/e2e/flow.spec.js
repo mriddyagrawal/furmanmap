@@ -302,3 +302,52 @@ test('the walked part of the route greys out behind you', async ({ page, context
   // And the remaining distance shown must have fallen.
   await expect(page.locator('#n-eta span')).toContainText(/left/);
 });
+
+test('the search bar keeps the chosen place, and the cross clears everything', async ({ page, context }) => {
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation(MALL);
+  await ready(page);
+  await page.locator('#fab-locate').click();
+
+  await page.fill('#q', 'riley');
+  await page.locator('#suggest li:not(.here)').first().click();
+
+  // The box names what the map is showing, rather than emptying itself.
+  await expect(page.locator('#q')).toHaveValue(/riley/i);
+  await expect(page.locator('#q-clear')).toBeVisible();
+  await expect(page.locator('body')).toHaveAttribute('data-mode', 'place');
+
+  await page.locator('#q-clear').click();
+
+  // The cross undoes the search AND everything the search put on the map.
+  await expect(page.locator('#q')).toHaveValue('');
+  await expect(page.locator('#q-clear')).toBeHidden();
+  await expect(page.locator('body')).toHaveAttribute('data-mode', 'browse');
+  await expect(page.locator('#sheet')).not.toBeInViewport();
+  const drawn = await page.evaluate(() => {
+    const m = window.__wayfinder.map;
+    return m.queryRenderedFeatures({ layers: ['route-line', 'pin-dot'] }).length;
+  });
+  expect(drawn, 'no pin or route left behind').toBe(0);
+});
+
+test('tapping a building on the map also fills the search bar', async ({ page }) => {
+  await ready(page);
+  // A real click on the canvas. MapLibre dispatches layer handlers through its
+  // own hit testing, so a synthetic fire() with a features array never reaches
+  // map.on('click', 'buildings-fill', ...).
+  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 20000 });
+  const at = await page.evaluate(async () => {
+    const w = window.__wayfinder, map = w.map;
+    const f = w.places.find(p => /duke/i.test(p.properties.name));
+    const c = turf.centroid(f).geometry.coordinates;
+    map.jumpTo({ center: c, zoom: 18, pitch: 0, bearing: 0 });
+    await new Promise(r => setTimeout(r, 900));
+    const p = map.project(c);
+    return { x: Math.round(p.x), y: Math.round(p.y) };
+  });
+  await page.mouse.click(at.x, at.y);
+  // However a place is chosen, the bar and the map must agree on what it is.
+  await expect(page.locator('#q')).toHaveValue(/duke/i);
+  await expect(page.locator('#q-clear')).toBeVisible();
+});
