@@ -111,3 +111,27 @@ test('the graph builds well inside its time budget', async ({ page }) => {
   expect(size, 'largest connected component').toBeGreaterThan(3000);
   if (ms !== null && ms > 0) expect(ms).toBeLessThan(150);
 });
+
+test('the chosen type actually reaches every control', async ({ page }) => {
+  // Buttons and inputs do not inherit font-family from body — the browser
+  // default wins unless each is told otherwise. That is the standard way a font
+  // swap ends up applying to prose and missing the interface.
+  await ready(page);
+  await page.fill('#q', 'duke');
+  await page.locator('#suggest li').first().click();
+  await page.locator('#p-directions').click();
+
+  const fonts = await page.evaluate(() =>
+    ['q', 'f-from', 'f-to', 'd-go', 'd-eta', 'p-name']
+      .map(id => document.getElementById(id))
+      .filter(Boolean)
+      .map(el => ({ id: el.id, family: getComputedStyle(el).fontFamily })));
+
+  for (const { id, family } of fonts) {
+    if (id === 'p-name') {
+      expect(family, 'place names use the display face').toMatch(/Abril Fatface/);
+    } else {
+      expect(family, `#${id} fell back to a browser default`).toMatch(/Outfit/);
+    }
+  }
+});
