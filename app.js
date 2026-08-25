@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · purple-campus';
+const BUILD = '2026-08-25 · mark';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -78,11 +78,7 @@ async function main() {
     // Credits belong in the attribution bar. It is where a map's provenance is
     // conventionally read, so a byline there is professional rather than a
     // signature stuck on the artwork.
-    attributionControl: {
-      compact: true,
-      customAttribution:
-        '<a href="https://github.com/mriddyagrawal/furmanmap" target="_blank" rel="noopener">Made by Mridul</a>'
-    },
+    attributionControl: false,
     hash: true
   });
   state.map = map;
@@ -96,6 +92,12 @@ async function main() {
     trackUserLocation: true, showUserLocation: true, showAccuracyCircle: true
   });
   map.addControl(state.geo);
+  // Attribution to the opposite corner from our FABs, so neither has to hide.
+  map.addControl(new maplibregl.AttributionControl({
+    compact: true,
+    customAttribution:
+      '<a href="https://github.com/mriddyagrawal/furmanmap" target="_blank" rel="noopener">Made by Mridul</a>'
+  }), 'bottom-left');
 
   // trigger() is a TOGGLE — calling it while active switches tracking OFF and
   // clears the dot. Follow the real state so we only ever turn it on.
