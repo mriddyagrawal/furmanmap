@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · carto';
+const BUILD = '2026-08-25 · purple-campus';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -250,8 +250,13 @@ function addLayers(map, buildings, boundary) {
   // which is what a plain addLayer does — it painted straight over Furman Lake
   // and every footpath, which is the opposite of helping someone navigate.
   const firstWater = (map.getStyle().layers.find(l => /water/.test(l.id)) || {}).id;
+  // Pale purple, not green. The first attempt tinted campus a pale green that
+  // measured deltaE 2.5 against off-campus grass — the same colour to the eye —
+  // so it read as "more grass" rather than as "this is Furman". One hue, one
+  // meaning: green is vegetation everywhere on this map, so the campus wash has
+  // to be something else, and the brand colour is the obvious something else.
   map.addLayer({ id: 'campus-tint', type: 'fill', source: 'boundary',
-    paint: { 'fill-color': '#e8f0dc', 'fill-opacity': .8 } }, firstWater);
+    paint: { 'fill-color': '#efeaf3', 'fill-opacity': .85 } }, firstWater);
 
   try {
     map.addSource('offcampus', { type: 'geojson', data: turf.mask(boundary.features[0]) });

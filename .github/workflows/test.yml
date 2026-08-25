@@ -24,8 +24,30 @@ jobs:
       - name: Router unit tests
         run: npm test
 
+      # Chromium is ~95 MB and was downloaded on every run, which was most of
+      # the job's wall time. Key on the resolved Playwright version so a version
+      # bump invalidates the cache rather than silently testing against a
+      # browser that no longer matches the library.
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore browser cache
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
       - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+
+      # A cache hit restores the browser but not the shared libraries it links
+      # against, and those live outside the cached directory.
+      - name: Install system dependencies
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: Browser tests (flow, accessibility, budgets)
         run: npx playwright test
