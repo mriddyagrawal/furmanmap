@@ -58,9 +58,10 @@ test('picking a place opens the sheet, and says so honestly with no location', a
   await expect(page.locator('body')).toHaveAttribute('data-mode', 'place');
   await expect(page.locator('#sheet')).toBeInViewport();
   await expect(page.locator('#p-name')).toContainText(/duke/i);
-  // No fix yet: a dash plus how to fix it, never an invented distance.
-  await expect(page.locator('#p-eta strong')).toHaveText('—');
-  await expect(page.locator('#p-eta span')).toContainText(/locate/i);
+  // No fix yet, so no distance at all — better than a dash captioned with a
+  // request for permission nobody has asked to give.
+  await expect(page.locator('#p-eta')).toBeHidden();
+  await expect(page.locator('#p-directions')).toBeVisible();
 });
 
 test('with a location, the sheet shows a real distance and time', async ({ page, context }) => {

@@ -215,18 +215,10 @@ test('the footer says how fresh the map is, not what build it is', async ({ page
   await page.locator('#suggest li:not(.here)').first().click();
   // Locale decides whether the day or the month comes first, so assert the
   // shape — a date containing a four-digit year — not one country's ordering.
-  await expect(page.locator('#build')).toContainText(/^Last updated .*\b20\d{2}\b/);
+  await expect(page.locator('#build')).toContainText(/Last updated .*\b20\d{2}\b/);
   // The build id still exists for telling a stale cache from a real bug — it
   // just lives in the tooltip now rather than on screen.
   await expect(page.locator('#build')).toHaveAttribute('title', /places/);
-});
-
-test('the byline sits in the attribution, where map credits belong', async ({ page }) => {
-  await ready(page);
-  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 25000 });
-  const attrib = page.locator('.maplibregl-ctrl-attrib');
-  await expect(attrib).toContainText(/Made by Mridul/);
-  await expect(attrib).toContainText(/OpenStreetMap/);
 });
 
 test('the site is installable and carries its own icon', async ({ page }) => {

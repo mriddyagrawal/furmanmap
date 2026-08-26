@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · credits';
+const BUILD = '2026-08-25 · mark2';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -532,9 +532,12 @@ function selectPlace(feature, { fly }) {
    which is the honest answer rather than a guess. */
 function showPlaceEta() {
   const r = state.here && state.to ? computeRoute() : null;
-  $('p-eta').innerHTML = r
-    ? `<strong>${fmtMins(r.metres)}</strong><span>${fmtDist(r.metres)} away</span>`
-    : `<strong>—</strong><span>tap the locate button to measure from here</span>`;
+  // With no fix there is nothing honest to show, so show nothing. The prompt
+  // that used to sit here asked for location before anyone had said they wanted
+  // directions, which is the wrong moment to ask.
+  $('p-eta').hidden = !r;
+  if (r) $('p-eta').innerHTML =
+    `<strong>${fmtMins(r.metres)}</strong><span>${fmtDist(r.metres)} away</span>`;
 
   // A usable route is a state, not the end of a sequence. If one exists, Go is
   // offered here too rather than only after stepping through the directions
