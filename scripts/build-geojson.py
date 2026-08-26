@@ -29,7 +29,12 @@ WALKABLE = {
     "secondary", "primary", "road",
 }
 # Tags worth shipping to the browser; the rest is noise that bloats the payload.
-KEEP = ("name", "alt_name", "short_name", "building", "amenity", "highway",
+# healthcare, leisure, tourism and man_made carry the categories that make a
+# campus legible — a health centre, a sports hall, the bell tower — and none of
+# them fit under `amenity`. Keeping them means a tag added in OSM shows up here
+# on the next refresh with no code change.
+KEEP = ("name", "alt_name", "short_name", "old_name", "building", "amenity",
+        "healthcare", "leisure", "tourism", "man_made", "historic", "highway",
         "surface", "wheelchair", "entrance", "access", "foot", "ref",
         "addr:housenumber", "addr:street", "operator", "incline",
         "handrail", "step_count", "covered", "tunnel", "bridge", "layer")
