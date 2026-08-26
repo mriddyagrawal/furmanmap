@@ -8,32 +8,32 @@ name `Furman University`); whole-bbox figures shown for contrast._
 
 | Metric | Value |
 |---|---|
-| walkable ways | 558 |
-| network km | 53.57 |
-| graph nodes | 4327 |
-| graph edges | 4687 |
-| junctions | 698 |
-| dead ends | 159 |
-| components | 6 |
-| largest component nodes | 4226 |
-| largest component pct | 97.7 |
-| orphan islands | 5 |
-| orphan nodes | 101 |
+| walkable ways | 592 |
+| network km | 55.55 |
+| graph nodes | 4592 |
+| graph edges | 5000 |
+| junctions | 755 |
+| dead ends | 161 |
+| components | 5 |
+| largest component nodes | 4495 |
+| largest component pct | 97.9 |
+| orphan islands | 4 |
+| orphan nodes | 97 |
 | near miss gaps | 2 |
 
-_Whole query bbox for contrast: 19 components, 88.5% in the largest, 1009 orphan nodes — the extra islands are off-campus fringe._
+_Whole query bbox for contrast: 18 components, 88.8% in the largest, 1005 orphan nodes — the extra islands are off-campus fringe._
 
 
 ## Completeness (on campus)
 
 | Metric | Value |
 |---|---|
-| buildings | 82 |
-| buildings named | 59 |
-| entrances | 47 |
-| steps ways | 12 |
+| buildings | 80 |
+| buildings named | 57 |
+| entrances | 60 |
+| steps ways | 13 |
 
-## Orphan path islands (5)
+## Orphan path islands (4)
 
 Routing drops these — a path here can't be reached from the rest of campus.
 
@@ -41,7 +41,6 @@ Routing drops these — a path here can't be reached from the rest of campus.
 |---|---|
 | 79 | [34.92667, -82.43728](https://www.openstreetmap.org/#map=19/34.92667/-82.43728) |
 | 13 | [34.92923, -82.43656](https://www.openstreetmap.org/#map=19/34.92923/-82.43656) |
-| 4 | [34.92334, -82.44065](https://www.openstreetmap.org/#map=19/34.92334/-82.44065) |
 | 3 | [34.92537, -82.43454](https://www.openstreetmap.org/#map=19/34.92537/-82.43454) |
 | 2 | [34.92236, -82.44359](https://www.openstreetmap.org/#map=19/34.92236/-82.44359) |
 
@@ -54,7 +53,7 @@ A path dead-ends within 8 m of a path it never joins. Almost always a missing sh
 | 3.5 m | [34.92923, -82.43656](https://www.openstreetmap.org/#map=20/34.92923/-82.43656) |
 | 7.8 m | [34.92882, -82.43748](https://www.openstreetmap.org/#map=20/34.92882/-82.43748) |
 
-## Named, but no category (15)
+## Named, but no category (12)
 
 `building=yes` says a building exists and nothing more. Give each a real value (`university`, `dormitory`, `sports_centre`, `chapel`, `office`…) or an `amenity`, or no category filter can ever exist.
 
@@ -65,15 +64,12 @@ A path dead-ends within 8 m of a path it never joins. Almost always a missing sh
 | Cliffs Cottage | `building=yes` | [open](https://www.openstreetmap.org/way/306150263) |
 | Furman Athletics | `building=yes` | [open](https://www.openstreetmap.org/way/59433965) |
 | Furman University Bell Tower | `building=yes` | [open](https://www.openstreetmap.org/way/37017956) |
-| Guardhouse | `building=yes` | [open](https://www.openstreetmap.org/way/303491803) |
-| Guardhouse | `building=yes` | [open](https://www.openstreetmap.org/way/303491804) |
 | Herring Center for Continuing Education | `building=yes` | [open](https://www.openstreetmap.org/way/308974906) |
 | Minor Herndon Mickel Tennis Center | `building=yes` | [open](https://www.openstreetmap.org/way/59434004) |
 | Montague Village | `building=yes` | [open](https://www.openstreetmap.org/way/60451087) |
 | Place of Peace | `building=yes` | [open](https://www.openstreetmap.org/way/303958491) |
 | Thomas Spann Farmer Hall | `building=yes` | [open](https://www.openstreetmap.org/way/60451088) |
 | Thoreau Cabin | `building=yes` | [open](https://www.openstreetmap.org/way/315968551) |
-| Timmons Arena | `building=yes` | [open](https://www.openstreetmap.org/relation/4713808) |
 | Younts Conference Center | `building=yes` | [open](https://www.openstreetmap.org/way/59433928) |
 
 ## On campus, no name (23)
@@ -99,7 +95,7 @@ Unsearchable and unroutable-to until named.
 | `building=yes` | [34.92703, -82.44247](https://www.openstreetmap.org/#map=19/34.92703/-82.44247) | [open](https://www.openstreetmap.org/way/37299210) |
 | `building=yes` | [34.92728, -82.44186](https://www.openstreetmap.org/#map=19/34.92728/-82.44186) | [open](https://www.openstreetmap.org/way/58710083) |
 | `building=university` | [34.92844, -82.43405](https://www.openstreetmap.org/#map=19/34.92844/-82.43405) | [open](https://www.openstreetmap.org/way/303958524) |
-| `building=dormitory` | [34.92877, -82.43885](https://www.openstreetmap.org/#map=19/34.92877/-82.43885) | [open](https://www.openstreetmap.org/way/304036799) |
+| `building=dormitory` | [34.92876, -82.43885](https://www.openstreetmap.org/#map=19/34.92876/-82.43885) | [open](https://www.openstreetmap.org/way/304036799) |
 | `building=dormitory` | [34.92878, -82.43857](https://www.openstreetmap.org/#map=19/34.92878/-82.43857) | [open](https://www.openstreetmap.org/way/304079106) |
 | `building=dormitory` | [34.92881, -82.43912](https://www.openstreetmap.org/#map=19/34.92881/-82.43912) | [open](https://www.openstreetmap.org/way/306150273) |
 | `building=dormitory` | [34.92883, -82.43811](https://www.openstreetmap.org/#map=19/34.92883/-82.43811) | [open](https://www.openstreetmap.org/way/306150272) |

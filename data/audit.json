@@ -1,38 +1,38 @@
 {
   "stats": {
-    "walkable_ways": 558,
-    "graph_nodes": 4327,
-    "graph_edges": 4687,
-    "network_km": 53.57,
-    "junctions": 698,
-    "dead_ends": 159,
-    "components": 6,
-    "largest_component_nodes": 4226,
-    "largest_component_pct": 97.7,
-    "orphan_islands": 5,
-    "orphan_nodes": 101,
+    "walkable_ways": 592,
+    "graph_nodes": 4592,
+    "graph_edges": 5000,
+    "network_km": 55.55,
+    "junctions": 755,
+    "dead_ends": 161,
+    "components": 5,
+    "largest_component_nodes": 4495,
+    "largest_component_pct": 97.9,
+    "orphan_islands": 4,
+    "orphan_nodes": 97,
     "near_miss_gaps": 2,
-    "buildings": 82,
-    "buildings_named": 59,
-    "buildings_in_bbox": 516,
-    "entrances": 47,
-    "steps_ways": 12,
+    "buildings": 80,
+    "buildings_named": 57,
+    "buildings_in_bbox": 514,
+    "entrances": 60,
+    "steps_ways": 13,
     "phase1_buildings_still_unnamed": [],
     "buildings_unnamed": 23,
-    "buildings_uncategorised": 15
+    "buildings_uncategorised": 12
   },
   "whole_bbox": {
-    "walkable_ways": 1124,
-    "graph_nodes": 8736,
-    "graph_edges": 9240,
-    "network_km": 140.54,
-    "junctions": 1306,
-    "dead_ends": 516,
-    "components": 19,
-    "largest_component_nodes": 7727,
-    "largest_component_pct": 88.5,
-    "orphan_islands": 18,
-    "orphan_nodes": 1009,
+    "walkable_ways": 1158,
+    "graph_nodes": 9001,
+    "graph_edges": 9553,
+    "network_km": 142.52,
+    "junctions": 1363,
+    "dead_ends": 518,
+    "components": 18,
+    "largest_component_nodes": 7996,
+    "largest_component_pct": 88.8,
+    "orphan_islands": 17,
+    "orphan_nodes": 1005,
     "near_miss_gaps": 4
   },
   "gaps": [
@@ -89,8 +89,8 @@
       "name": null,
       "building": "dormitory",
       "osm": "https://www.openstreetmap.org/way/304036799",
-      "lat": 34.92876506363637,
-      "lon": -82.43885497272726
+      "lat": 34.92876086666667,
+      "lon": -82.43885451666667
     },
     {
       "name": null,
@@ -131,8 +131,8 @@
       "name": null,
       "building": "dormitory",
       "osm": "https://www.openstreetmap.org/way/306150273",
-      "lat": 34.92881371333333,
-      "lon": -82.43911929999999
+      "lat": 34.92881024375,
+      "lon": -82.43912143749999
     },
     {
       "name": null,
@@ -214,27 +214,6 @@
   ],
   "uncategorised": [
     {
-      "name": "Timmons Arena",
-      "building": "yes",
-      "osm": "https://www.openstreetmap.org/relation/4713808",
-      "lat": 34.917941944736846,
-      "lon": -82.43750836578947
-    },
-    {
-      "name": "Guardhouse",
-      "building": "yes",
-      "osm": "https://www.openstreetmap.org/way/303491803",
-      "lat": 34.92546301,
-      "lon": -82.434596755
-    },
-    {
-      "name": "Guardhouse",
-      "building": "yes",
-      "osm": "https://www.openstreetmap.org/way/303491804",
-      "lat": 34.92532885999999,
-      "lon": -82.43467277
-    },
-    {
       "name": "Place of Peace",
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/303958491",
@@ -301,8 +280,8 @@
       "name": "Alester G Furman Administration",
       "building": "yes",
       "osm": "https://www.openstreetmap.org/way/59434086",
-      "lat": 34.92543882857143,
-      "lon": -82.43659321428572
+      "lat": 34.925402219999995,
+      "lon": -82.43661795
     },
     {
       "name": "Montague Village",
