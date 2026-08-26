@@ -214,7 +214,9 @@ body[data-mode="nav"]        .pane-nav   { display: flex; }
 .toggle { display: flex; align-items: center; gap: 9px; font-size: 15px; }
 .toggle input { accent-color: var(--purple); width: 18px; height: 18px; }
 
-#build { margin: 10px 0 0; font-size: 10.5px; color: var(--muted); text-align: center; }
+#build { margin: 10px 0 0; font-size: 11px; color: var(--muted); text-align: center; }
+#build a { color: var(--muted); text-decoration: none; font-weight: 600; }
+#build a:hover { text-decoration: underline; }
 
 /* ---------- mode visibility ---------- */
 
@@ -226,9 +228,16 @@ body[data-mode="browse"] #endpoints,
 body[data-mode="place"]  #endpoints { display: none; }
 
 /* Choosing an endpoint keeps the endpoints on screen above the search box, so
-   the half-built route stays visible instead of being replaced by a text field. */
+   the half-built route stays visible instead of being replaced by a text field.
+ *
+ * Reordered, not reversed. column-reverse put the search field at the BOTTOM of
+ * the stack, so every suggestion added to the list pushed the field further
+ * down the screen — the thing you are typing into should not move while you
+ * type. Explicit order keeps endpoints, then field, then list. */
 body[data-mode="picking"] #sheet { transform: translateY(101%); }
-body[data-mode="picking"] #top { flex-direction: column-reverse; }
+body[data-mode="picking"] #endpoints { order: 1; }
+body[data-mode="picking"] #searchbar { order: 2; }
+body[data-mode="picking"] #suggest   { order: 3; }
 /* Navigating: keep the endpoints visible but out of the way of the road ahead. */
 body[data-mode="nav"] #endpoints { opacity: .96; }
 
@@ -256,3 +265,5 @@ body[data-mode="nav"] #endpoints { opacity: .96; }
 }
 .maplibregl-ctrl-attrib { font-size: 10px; }
 .maplibregl-ctrl-attrib a { color: var(--ink-soft); }
+/* Collapsed, the control is just the (i) button — no plate behind it. */
+.maplibregl-ctrl-attrib:not([open]) { background: none; box-shadow: none; }

@@ -254,6 +254,19 @@ test('"Your location" is offered when choosing a starting point', async ({ page,
   await expect(page.locator('#endpoints')).toBeVisible();
   await expect(page.locator('#suggest li.here')).toContainText(/your location/i);
 
+  // The field must not move as the list grows under it.
+  const before = await page.locator('#searchbar').boundingBox();
+  await page.fill('#q', 'hall');
+  await expect(page.locator('#suggest li').nth(2)).toBeVisible();
+  const after = await page.locator('#searchbar').boundingBox();
+  expect(Math.abs(after.y - before.y), 'search field stayed put while suggestions grew')
+    .toBeLessThan(2);
+
+  // And "Your location" steps aside once you have said what you are after.
+  await expect(page.locator('#suggest li.here')).toHaveCount(0);
+  await page.fill('#q', '');
+  await expect(page.locator('#suggest li.here')).toHaveCount(1);
+
   await page.locator('#suggest li.here').click();
   await expect(page.locator('body')).toHaveAttribute('data-mode', 'directions');
   await expect(page.locator('#f-from span')).toContainText(/your location/i);

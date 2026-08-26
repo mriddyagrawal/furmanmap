@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · mark';
+const BUILD = '2026-08-25 · credits';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -28,6 +28,66 @@ const fmtDist = m =>
 const fmtMins = m =>
   m == null ? '—' : `${Math.max(1, Math.round(m / WALK_M_PER_MIN))} min`;
 const nameOf = f => f && (f.name || (f.properties && f.properties.name)) || null;
+
+/* OSM tag values are a controlled vocabulary — lowercase, underscored,
+ * machine-readable — and are not meant to be shown to anyone. "university" is
+ * the correct tag for an academic building and changing it upstream would be
+ * wrong data that every other consumer of OSM would inherit.
+ *
+ * So the translation belongs here, once per category rather than once per
+ * building: every building carrying a tag gets its label automatically,
+ * including the ones the GIS club adds next year. Anything unmapped falls back
+ * to title case, so a new tag reads as "Sports Centre" rather than vanishing.
+ */
+const CATEGORY = {
+  university: 'Academic Building',
+  college: 'Academic Building',
+  school: 'Academic Building',
+  dormitory: 'Residence Hall',
+  residential: 'Residence Hall',
+  apartments: 'Apartments',
+  house: 'House',
+  library: 'Library',
+  chapel: 'Chapel',
+  place_of_worship: 'Chapel',
+  cathedral: 'Chapel',
+  sports_centre: 'Athletics',
+  stadium: 'Athletics',
+  sports_hall: 'Athletics',
+  restaurant: 'Dining',
+  cafe: 'Café',
+  fast_food: 'Dining',
+  food_court: 'Dining',
+  theatre: 'Theatre',
+  arts_centre: 'Arts',
+  museum: 'Museum',
+  parking: 'Parking',
+  hospital: 'Health',
+  clinic: 'Health',
+  office: 'Offices',
+  retail: 'Shop',
+  commercial: 'Shop',
+  service: 'Service Building',
+  greenhouse: 'Greenhouse',
+  roof: 'Shelter',
+  shed: 'Outbuilding',
+  garage: 'Garage',
+  yes: 'Building',
+};
+
+const titleCase = v => String(v).replace(/_/g, ' ')
+  .replace(/\b\w/g, c => c.toUpperCase());
+
+/* amenity is more specific than building, so it wins: a library tagged
+   building=university should read "Library", not "Academic Building". */
+function categoryOf(props) {
+  for (const key of ['amenity', 'building']) {
+    const v = props[key];
+    if (!v || v === 'yes') continue;
+    return CATEGORY[v] || titleCase(v);
+  }
+  return CATEGORY[props.building] || 'Building';
+}
 
 /* ---------- modes ---------- */
 
@@ -92,12 +152,16 @@ async function main() {
     trackUserLocation: true, showUserLocation: true, showAccuracyCircle: true
   });
   map.addControl(state.geo);
-  // Attribution to the opposite corner from our FABs, so neither has to hide.
-  map.addControl(new maplibregl.AttributionControl({
-    compact: true,
-    customAttribution:
-      '<a href="https://github.com/mriddyagrawal/furmanmap" target="_blank" rel="noopener">Made by Mridul</a>'
-  }), 'bottom-left');
+  // Collapsed to an (i), which is what Google and Mapbox both do. The ODbL
+  // requires the OpenStreetMap credit to be reachable, not to be permanently
+  // spread across the map — one tap satisfies it. The byline moves to the sheet
+  // where it can be read without competing with the credits.
+  const attribution = new maplibregl.AttributionControl({ compact: true });
+  map.addControl(attribution, 'bottom-left');
+  map.once('idle', () => {
+    const details = document.querySelector('.maplibregl-ctrl-attrib');
+    if (details) details.removeAttribute('open');
+  });
 
   // trigger() is a TOGGLE — calling it while active switches tracking OFF and
   // clears the dot. Follow the real state so we only ever turn it on.
@@ -138,10 +202,13 @@ async function main() {
     // still matters for telling a stale cache from a real bug, so it moves to
     // the tooltip and the console rather than disappearing.
     const when = state.meta && state.meta.generated;
-    $('build').textContent = when
+    const updated = when
       ? `Last updated ${new Date(when + 'T00:00:00Z').toLocaleDateString(undefined,
           { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}`
       : 'Last updated — unknown';
+    $('build').innerHTML =
+      `<a href="https://github.com/mriddyagrawal/furmanmap" target="_blank" rel="noopener">`
+      + `Made by Mridul</a> · ${updated}`;
     const stamp = `${BUILD} · ${state.places.length} places · `
                 + `${state.graph.size.toLocaleString()} path nodes`;
     $('build').title = stamp;
@@ -359,7 +426,11 @@ function showSuggestions(term) {
   // Offer the user's own position as a first-class choice. Without it the only
   // way to start a route from where you are is to guess that the locate button
   // must be pressed first, which is not a thing anyone should have to know.
-  const here = picking
+  //
+  // It shows only while the field is empty. Once someone is typing a name they
+  // have said what they are looking for, and leaving it pinned above the
+  // matches makes it a permanent misfire target at the top of the list.
+  const here = picking && !term
     ? `<li role="option" class="here" data-here="1"><i class="pip"></i>Your location</li>` : '';
   if (!term) {
     if (!here) return hideSuggestions();
@@ -371,9 +442,8 @@ function showSuggestions(term) {
   if (!hits.length && !here) return hideSuggestions();
   list.innerHTML = here + hits.map(h => {
     const p = h.item.properties;
-    const kind = p.amenity || (p.building && p.building !== 'yes' ? p.building : 'building');
     return `<li role="option" data-id="${h.item.id}">${p.name}
-      <span class="sub">${String(kind).replace(/_/g, ' ')}</span></li>`;
+      <span class="sub">${categoryOf(p)}</span></li>`;
   }).join('');
   list.hidden = false;
   bindSuggestions();
@@ -447,9 +517,7 @@ function selectPlace(feature, { fly }) {
   state.to = feature;
   if (!state.from && state.here) useMyLocationAsStart();
   $('p-name').textContent = nameOf(feature);
-  const p = feature.properties;
-  const kind = p.amenity || (p.building && p.building !== 'yes' ? p.building : 'building');
-  $('p-kind').textContent = String(kind).replace(/_/g, ' ');
+  $('p-kind').textContent = categoryOf(feature.properties);
   setMode('place');
   showPlaceEta();
   // Keep the search bar in step with the map, however the place was chosen.
