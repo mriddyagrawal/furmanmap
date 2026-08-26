@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · paths';
+const BUILD = '2026-08-25 · surfaces';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -342,25 +342,54 @@ function recolourBasemap(map) {
  */
 const FULL_FIDELITY = { tolerance: 0 };
 
-/* Footpaths ship at rgb(234,234,234), which against the campus wash measures
- * deltaE 5 — the threshold of being visible at all. On a map whose entire
- * purpose is walking, the walkable surface should not be the faintest thing on
- * screen. Darkened to deltaE 17.5 against the wash, while staying separable
- * from the buildings, and widened a little because a path someone is meant to
- * follow deserves more than a hairline. */
+/* Paths as surfaces, not centrelines.
+ *
+ * OSM maps footpaths as a single line down the middle — there is no polygon of
+ * the actual paving, and area:highway is vanishingly rare. But a wide line with
+ * round joins and caps IS a buffered polygon, and MapLibre renders it as one.
+ * That matters at junctions: buffering the geometry ourselves would produce
+ * exactly the mess of overlapping blobs you get at every circle and crossing,
+ * while the renderer resolves them correctly for free.
+ *
+ * So the surface is made by casing — a wider dark line underneath, a narrower
+ * pale one on top. Two lines, one ribbon with edges. It is how every road on
+ * every map gets its border, and it is what the route line already does.
+ *
+ * Widths track real metres: at this latitude zoom 17 is ~0.98 m/px and each
+ * zoom doubles it, so the numbers below hold a path at roughly 2m of ground
+ * regardless of how far in you are, with a floor so it stays visible when
+ * zoomed out past the point where 2m is half a pixel.
+ */
+const PATH_WIDTH  = ['interpolate', ['exponential', 2], ['zoom'],
+                     14, 1.2, 16, 1.8, 17, 2.6, 18, 4.4, 19, 8, 20, 15];
+const PATH_CASING = ['interpolate', ['exponential', 2], ['zoom'],
+                     14, 2.2, 16, 3.2, 17, 4.4, 18, 7, 19, 12, 20, 21];
+
 function emphasisePaths(map) {
-  for (const layer of map.getStyle().layers) {
-    const id = layer.id.toLowerCase();
-    if (layer.type !== 'line') continue;
+  const paths = map.getStyle().layers.filter(l =>
+    l.type === 'line' && /highway_path|footway|pedestrian|track/.test(l.id.toLowerCase()));
+
+  for (const layer of paths) {
     try {
-      if (/highway_path|footway|pedestrian|track/.test(id)) {
-        map.setPaintProperty(layer.id, 'line-color', '#c3b9c9');
-        map.setPaintProperty(layer.id, 'line-width', [
-          'interpolate', ['linear'], ['zoom'], 14, 1, 16, 2, 18, 3.4, 20, 5]);
-      } else if (/highway_minor|street|service/.test(id)) {
-        map.setPaintProperty(layer.id, 'line-color', '#d5cfda');
-      }
-    } catch (e) { /* layer does not take these */ }
+      // The casing goes in first, immediately beneath the path it outlines.
+      map.addLayer({
+        id: layer.id + '-casing', type: 'line',
+        source: layer.source, 'source-layer': layer['source-layer'],
+        filter: layer.filter, minzoom: layer.minzoom ?? 0,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#b3a7bd', 'line-width': PATH_CASING }
+      }, layer.id);
+      map.setLayoutProperty(layer.id, 'line-cap', 'round');
+      map.setLayoutProperty(layer.id, 'line-join', 'round');
+      map.setPaintProperty(layer.id, 'line-color', '#f6f3f8');
+      map.setPaintProperty(layer.id, 'line-width', PATH_WIDTH);
+    } catch (e) { console.warn('could not case', layer.id, e.message); }
+  }
+
+  for (const layer of map.getStyle().layers) {
+    if (layer.type !== 'line') continue;
+    if (!/highway_minor|street|service/.test(layer.id.toLowerCase())) continue;
+    try { map.setPaintProperty(layer.id, 'line-color', '#ddd6e2'); } catch (e) {}
   }
 }
 
