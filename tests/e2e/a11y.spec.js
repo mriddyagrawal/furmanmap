@@ -281,3 +281,36 @@ test('the byline is readable without opening the credits', async ({ page }) => {
   await expect(page.locator('#build')).toContainText(/Made by Mridul/);
   await expect(page.locator('#build')).toContainText(/Last updated/);
 });
+
+test('building outlines are not simplified away', async ({ page }) => {
+  // MapLibre's default GeoJSON tolerance of 0.375 cost Plyler Hall a third of
+  // its vertices. Douglas-Peucker keeps extremes and drops what is between, so
+  // curves become fewer longer straight segments rather than smoother ones.
+  await ready(page);
+  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 25000 });
+
+  const loss = await page.evaluate(async () => {
+    const m = window.__wayfinder.map;
+    const src = await (await fetch('data/buildings.geojson')).json();
+    const count = f => f.geometry.type === 'Polygon' ? f.geometry.coordinates[0].length
+      : f.geometry.coordinates.reduce((a, p) => a + p[0].length, 0);
+    const worst = [];
+    for (const n of ['plyler', 'trone', 'duke']) {
+      const f = src.features.find(x => (x.properties.name || '').toLowerCase().includes(n));
+      if (!f) continue;
+      m.jumpTo({ center: turf.centroid(f).geometry.coordinates, zoom: 17, pitch: 0, bearing: 0 });
+      await new Promise(r => setTimeout(r, 900));
+      const drawn = m.queryRenderedFeatures({ layers: ['buildings-fill'] })
+        .find(r => r.properties.fid === f.id);
+      if (drawn) worst.push({ name: f.properties.name, src: count(f), drawn: count(drawn) });
+    }
+    return worst;
+  });
+
+  expect(loss.length, 'found buildings to compare').toBeGreaterThan(1);
+  for (const b of loss) {
+    // A little loss at tile edges is normal; a third of the outline is not.
+    expect(b.drawn / b.src, `${b.name}: ${b.src} vertices drawn as ${b.drawn}`)
+      .toBeGreaterThan(0.9);
+  }
+});
