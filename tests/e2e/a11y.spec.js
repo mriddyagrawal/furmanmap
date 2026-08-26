@@ -206,7 +206,14 @@ test('the world outside campus is veiled, and campus is not', async ({ page }) =
   });
   expect(veil, 'the veil layer exists').toBeTruthy();
   expect(veil.rings, 'world ring plus a campus-shaped hole').toBeGreaterThan(1);
-  expect(veil.opacity).toBeGreaterThan(0.2);
+  // Opacity may be a plain number or a zoom expression; assert on the values
+  // either way rather than on the shape it happens to take today.
+  const opacities = Array.isArray(veil.opacity)
+    ? veil.opacity.filter(v => typeof v === 'number' && v > 0 && v <= 1)
+    : [veil.opacity];
+  expect(opacities.length, `unreadable fill-opacity: ${JSON.stringify(veil.opacity)}`)
+    .toBeGreaterThan(0);
+  expect(Math.min(...opacities), 'the veil actually veils').toBeGreaterThan(0.2);
   expect(veil.order, 'campus draws over the veil, not under it').toBe(true);
 });
 test('the footer says how fresh the map is, not what build it is', async ({ page }) => {
@@ -274,12 +281,19 @@ test('OpenStreetMap attribution is visible — it is a licence obligation', asyn
   await expect(attrib).toContainText(/OpenStreetMap/);
 });
 
-test('the byline is readable without opening the credits', async ({ page }) => {
+test('the byline is readable without opening the credits, or anything else', async ({ page }) => {
+  // It used to live inside the sheet, which is hidden until a place is chosen —
+  // so on the screen everyone sees first, it was not there at all.
   await ready(page);
-  await page.fill('#q', 'duke');
-  await page.locator('#suggest li:not(.here)').first().click();
+  await expect(page.locator('body')).toHaveAttribute('data-mode', 'browse');
+  await expect(page.locator('#build')).toBeInViewport();
   await expect(page.locator('#build')).toContainText(/Made by Mridul/);
   await expect(page.locator('#build')).toContainText(/Last updated/);
+
+  // And it stays out of the way once the sheet comes up.
+  await page.fill('#q', 'duke');
+  await page.locator('#suggest li:not(.here)').first().click();
+  await expect(page.locator('#build')).toBeInViewport();
 });
 
 test('building outlines are not simplified away', async ({ page }) => {
