@@ -12,6 +12,9 @@ set -euo pipefail
 
 BBOX="${BBOX:-34.912,-82.457,34.938,-82.421}"   # S,W,N,E — campus + fringe
 ROUNDS="${ROUNDS:-6}"
+# How far behind live OSM a mirror may be before we would rather wait for
+# another one. Overpass normally tracks within a minute or two.
+MAX_LAG_MIN="${MAX_LAG_MIN:-90}"
 PER_TRY_TIMEOUT="${PER_TRY_TIMEOUT:-90}"
 DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
 OUT="$DIR/campus.osm.json"
@@ -61,8 +64,22 @@ fetch_part () {
               --data-urlencode "data=[out:json][timeout:180];$body" \
               -o "$tmp" -w '%{http_code}' 2>/dev/null || echo 000)"
     if [ "$code" = "200" ] && jq -e '.elements' "$tmp" >/dev/null 2>&1; then
+      # Mirrors do not all track OSM equally closely, and a stale one answers
+      # perfectly well with old data. private.coffee once served a building
+      # relation at version 3 from 2014 when OSM was on version 7, which
+      # silently reverted a name fixed the day before and dropped two others.
+      # Every Overpass response carries the age of the database that answered.
+      base="$(jq -r '.osm3s.timestamp_osm_base // empty' "$tmp")"
+      if [ -n "$base" ]; then
+        age=$(( ($(date -u +%s) - $(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$base" +%s 2>/dev/null \
+                                  || date -u -d "$base" +%s)) / 60 ))
+        if [ "$age" -gt "$MAX_LAG_MIN" ]; then
+          echo "  · $name: ${url#https://} is $age min behind OSM, refusing it"
+          rm -f "$tmp"; sleep 2; continue
+        fi
+      fi
       mv "$tmp" "$dest"
-      echo "  ✓ $name: $(jq '.elements|length' "$dest") elements  (round $round, ${url#https://})"
+      echo "  ✓ $name: $(jq '.elements|length' "$dest") elements  (round $round, ${url#https://}, ${age:-?} min behind)"
       return 0
     fi
     # Overpass failures are verbose — surface the reason instead of guessing.

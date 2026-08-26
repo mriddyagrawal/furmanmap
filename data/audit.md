@@ -8,14 +8,14 @@ name `Furman University`); whole-bbox figures shown for contrast._
 
 | Metric | Value |
 |---|---|
-| walkable ways | 592 |
-| network km | 55.55 |
-| graph nodes | 4592 |
-| graph edges | 5000 |
-| junctions | 755 |
+| walkable ways | 593 |
+| network km | 55.58 |
+| graph nodes | 4596 |
+| graph edges | 5005 |
+| junctions | 756 |
 | dead ends | 161 |
 | components | 5 |
-| largest component nodes | 4495 |
+| largest component nodes | 4499 |
 | largest component pct | 97.9 |
 | orphan islands | 4 |
 | orphan nodes | 97 |

@@ -22,8 +22,12 @@ module.exports = defineConfig({
     launchOptions: { args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] }
   },
   projects: [
+    // Everything runs on a phone, because that is what this is for.
     { name: 'phone', use: { ...devices['Pixel 7'] } },
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } }
+    // Desktop repeats only the tests whose result can actually differ with the
+    // viewport. Running all 79 twice doubled the suite to catch layout bugs
+    // that a routing or contrast test was never going to find either way.
+    { name: 'desktop', grep: /@layout/, use: { ...devices['Desktop Chrome'] } }
   ],
   webServer: {
     command: 'python3 -m http.server 8765',
