@@ -58,9 +58,10 @@ test('picking a place opens the sheet, and says so honestly with no location', a
   await expect(page.locator('body')).toHaveAttribute('data-mode', 'place');
   await expect(page.locator('#sheet')).toBeInViewport();
   await expect(page.locator('#p-name')).toContainText(/duke/i);
-  // No fix yet: a dash plus how to fix it, never an invented distance.
-  await expect(page.locator('#p-eta strong')).toHaveText('—');
-  await expect(page.locator('#p-eta span')).toContainText(/locate/i);
+  // No fix yet, so no distance at all — better than a dash captioned with a
+  // request for permission nobody has asked to give.
+  await expect(page.locator('#p-eta')).toBeHidden();
+  await expect(page.locator('#p-directions')).toBeVisible();
 });
 
 test('with a location, the sheet shows a real distance and time', async ({ page, context }) => {
@@ -253,6 +254,19 @@ test('"Your location" is offered when choosing a starting point', async ({ page,
   // not vanish behind a text field.
   await expect(page.locator('#endpoints')).toBeVisible();
   await expect(page.locator('#suggest li.here')).toContainText(/your location/i);
+
+  // The field must not move as the list grows under it.
+  const before = await page.locator('#searchbar').boundingBox();
+  await page.fill('#q', 'hall');
+  await expect(page.locator('#suggest li').nth(2)).toBeVisible();
+  const after = await page.locator('#searchbar').boundingBox();
+  expect(Math.abs(after.y - before.y), 'search field stayed put while suggestions grew')
+    .toBeLessThan(2);
+
+  // And "Your location" steps aside once you have said what you are after.
+  await expect(page.locator('#suggest li.here')).toHaveCount(0);
+  await page.fill('#q', '');
+  await expect(page.locator('#suggest li.here')).toHaveCount(1);
 
   await page.locator('#suggest li.here').click();
   await expect(page.locator('body')).toHaveAttribute('data-mode', 'directions');
