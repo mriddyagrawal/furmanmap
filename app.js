@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · fidelity';
+const BUILD = '2026-08-25 · paths';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -206,6 +206,7 @@ async function main() {
 
   map.on('load', () => {
     recolourBasemap(map);
+    emphasisePaths(map);
     addLayers(map, buildings, boundary);
     flushPending();
     highlight([state.from, state.to]);
@@ -310,9 +311,13 @@ const PALETTE = [
 function recolourBasemap(map) {
   for (const layer of map.getStyle().layers) {
     const id = layer.id.toLowerCase();
-    // Never touch our own layers, labels, or roads: roads carry their own
-    // hierarchy by width and shade, and relighting them would flatten it.
+    // Labels and our own layers are never touched. Roads mostly are not either:
+    // their hierarchy is carried by width and shade, and relighting them would
+    // flatten a distinction positron already makes well. Paths are the
+    // exception, handled separately below — on a walking map they are the
+    // subject, not background.
     if (id.startsWith('buildings-') || id.startsWith('route') || id.startsWith('boundary')
+        || id.startsWith('campus') || id.startsWith('offcampus')
         || layer.type === 'symbol' || /road|highway|bridge|tunnel|transit|rail|aero/.test(id)) continue;
     const hit = PALETTE.find(([re]) => re.test(id));
     if (!hit) continue;
@@ -336,6 +341,28 @@ function recolourBasemap(map) {
  * vertices, which is nothing.
  */
 const FULL_FIDELITY = { tolerance: 0 };
+
+/* Footpaths ship at rgb(234,234,234), which against the campus wash measures
+ * deltaE 5 — the threshold of being visible at all. On a map whose entire
+ * purpose is walking, the walkable surface should not be the faintest thing on
+ * screen. Darkened to deltaE 17.5 against the wash, while staying separable
+ * from the buildings, and widened a little because a path someone is meant to
+ * follow deserves more than a hairline. */
+function emphasisePaths(map) {
+  for (const layer of map.getStyle().layers) {
+    const id = layer.id.toLowerCase();
+    if (layer.type !== 'line') continue;
+    try {
+      if (/highway_path|footway|pedestrian|track/.test(id)) {
+        map.setPaintProperty(layer.id, 'line-color', '#c3b9c9');
+        map.setPaintProperty(layer.id, 'line-width', [
+          'interpolate', ['linear'], ['zoom'], 14, 1, 16, 2, 18, 3.4, 20, 5]);
+      } else if (/highway_minor|street|service/.test(id)) {
+        map.setPaintProperty(layer.id, 'line-color', '#d5cfda');
+      }
+    } catch (e) { /* layer does not take these */ }
+  }
+}
 
 function addLayers(map, buildings, boundary) {
   // The boundary is still needed as geometry — it is what the veil is cut
