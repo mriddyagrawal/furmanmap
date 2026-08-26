@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · thin-edge';
+const BUILD = '2026-08-25 · veil';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -66,6 +66,7 @@ const CATEGORY = {
   clinic: 'Health Center',
   doctors: 'Health Center',
   centre: 'Health Center',
+  center: 'Health Center',      // OSM's spelling is centre; accept both
   pharmacy: 'Pharmacy',
   conference_centre: 'Conference Center',
   guardhouse: 'Guardhouse',
@@ -162,7 +163,10 @@ async function main() {
     // conventionally read, so a byline there is professional rather than a
     // signature stuck on the artwork.
     attributionControl: false,
-    hash: true
+    // No hash. It rewrote the URL on every pan and zoom, which turns the back
+    // button into a list of camera positions and makes the address bar flicker
+    // while you are simply looking around. Sharing a view is not worth that.
+    hash: false
   });
   state.map = map;
 
@@ -426,8 +430,17 @@ function addLayers(map, buildings, boundary) {
 
   try {
     map.addSource('offcampus', { type: 'geojson', data: turf.mask(boundary.features[0]), ...FULL_FIDELITY });
+    // Heavier than before. Off-campus detail only has to be enough to orient
+    // by — a road you recognise, the shape of the highway — and at .55 it was
+    // still competing with campus for attention.
     map.addLayer({ id: 'offcampus-veil', type: 'fill', source: 'offcampus',
-      paint: { 'fill-color': '#f7f6f3', 'fill-opacity': .55 } });
+      paint: {
+        'fill-color': '#f6f5f2',
+        // Lighter still when zoomed out, where more of the screen is not
+        // campus; eased off close in, where the surroundings are context you
+        // are probably about to walk into.
+        'fill-opacity': ['interpolate', ['linear'], ['zoom'], 13, .88, 16, .78, 18, .7]
+      } });
   } catch (e) { console.warn('no campus boundary to veil against', e); }
   // MapLibre coerces a non-numeric GeoJSON feature id to 0 when it builds its
   // internal tiles, so e.features[0].id came back as 0 for every building and

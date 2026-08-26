@@ -314,3 +314,16 @@ test('building outlines are not simplified away', async ({ page }) => {
       .toBeGreaterThan(0.9);
   }
 });
+
+test('panning the map does not rewrite the URL', async ({ page }) => {
+  // The hash rewrote the address on every pan and zoom, filling the back button
+  // with camera positions and flickering the address bar while simply looking
+  // around.
+  await ready(page);
+  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 25000 });
+  const before = page.url();
+  await page.evaluate(() => window.__wayfinder.map.jumpTo({ center: [-82.4300, 34.9300], zoom: 18 }));
+  await page.waitForTimeout(1200);
+  expect(page.url(), 'the URL stayed put while the map moved').toBe(before);
+  expect(page.url()).not.toMatch(/#\d/);
+});
