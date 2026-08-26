@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · surfaces';
+const BUILD = '2026-08-25 · thin-edge';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -362,8 +362,13 @@ const FULL_FIDELITY = { tolerance: 0 };
  */
 const PATH_WIDTH  = ['interpolate', ['exponential', 2], ['zoom'],
                      14, 1.2, 16, 1.8, 17, 2.6, 18, 4.4, 19, 8, 20, 15];
+// The casing is only as wide as the path plus its two edges, so the border
+// thickness is (casing - path) / 2. At the first values that worked out to 0.9px
+// a side at browsing zoom and 3px zoomed in, which drew a path with a heavy
+// outline rather than a path with an edge. Roughly halved: 0.55px a side at
+// zoom 17, 1.2px at zoom 20.
 const PATH_CASING = ['interpolate', ['exponential', 2], ['zoom'],
-                     14, 2.2, 16, 3.2, 17, 4.4, 18, 7, 19, 12, 20, 21];
+                     14, 1.9, 16, 2.7, 17, 3.7, 18, 5.8, 19, 9.8, 20, 17.4];
 
 function emphasisePaths(map) {
   const paths = map.getStyle().layers.filter(l =>
