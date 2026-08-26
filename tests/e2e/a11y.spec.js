@@ -19,7 +19,7 @@ const scan = page => new AxeBuilder({ page })
   .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']);
 
 for (const theme of ['light', 'dark']) {
-  test(`no accessibility violations in ${theme} mode`, async ({ page }) => {
+  test(`no accessibility violations in ${theme} mode @layout`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: theme });
     await ready(page);
     // Wait for the build stamp to be populated. It is written on the map's load
@@ -48,7 +48,7 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-test('every interactive control has an accessible name', async ({ page }) => {
+test('every interactive control has an accessible name @layout', async ({ page }) => {
   await ready(page);
   const unnamed = await page.evaluate(() =>
     [...document.querySelectorAll('button, input, [role="option"]')]
@@ -74,7 +74,7 @@ test('the whole flow is reachable by keyboard alone', async ({ page }) => {
   expect(reachable).toBe(true);
 });
 
-test('the search box does not trigger iOS zoom-on-focus', async ({ page }) => {
+test('the search box does not trigger iOS zoom-on-focus @layout', async ({ page }) => {
   // Any font-size under 16px makes mobile Safari zoom the viewport when the
   // field is focused, which on a map is genuinely disorienting.
   await ready(page);
@@ -281,7 +281,7 @@ test('OpenStreetMap attribution is visible — it is a licence obligation', asyn
   await expect(attrib).toContainText(/OpenStreetMap/);
 });
 
-test('the byline is readable without opening the credits, or anything else', async ({ page }) => {
+test('the byline is readable without opening the credits, or anything else @layout', async ({ page }) => {
   // It used to live inside the sheet, which is hidden until a place is chosen —
   // so on the screen everyone sees first, it was not there at all.
   await ready(page);

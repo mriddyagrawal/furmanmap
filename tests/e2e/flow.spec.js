@@ -16,7 +16,7 @@ const ready = async page => {
     { timeout: 20000 }).toBeGreaterThan(50);
 };
 
-test('loads the campus and reports its build', async ({ page }) => {
+test('loads the campus and reports its build @layout', async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await ready(page);
@@ -51,7 +51,7 @@ test('an alias finds the right hall', async ({ page }) => {
   await expect(page.locator('#suggest li').first()).toContainText('North Village C');
 });
 
-test('picking a place opens the sheet, and says so honestly with no location', async ({ page }) => {
+test('picking a place opens the sheet, and says so honestly with no location @layout', async ({ page }) => {
   await ready(page);
   await page.fill('#q', 'duke');
   await page.locator('#suggest li').first().click();
@@ -75,7 +75,7 @@ test('with a location, the sheet shows a real distance and time', async ({ page,
   await expect(page.locator('#p-eta span')).toHaveText(/\d+(\.\d+)? (m|km) away/);
 });
 
-test('directions draws a route and enables Go', async ({ page, context }) => {
+test('directions draws a route and enables Go @layout', async ({ page, context }) => {
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation(MALL);
   await ready(page);
@@ -240,7 +240,7 @@ test('Directions opens a route preview even with nothing to route yet', async ({
   await expect(page.locator('#d-go')).toBeDisabled();
 });
 
-test('"Your location" is offered when choosing a starting point', async ({ page, context }) => {
+test('"Your location" is offered when choosing a starting point @layout', async ({ page, context }) => {
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation(MALL);
   await ready(page);
@@ -320,7 +320,7 @@ test('the walked part of the route greys out behind you', async ({ page, context
   await expect(page.locator('#n-eta span')).toContainText(/left/);
 });
 
-test('the search bar keeps the chosen place, and the cross clears everything', async ({ page, context }) => {
+test('the search bar keeps the chosen place, and the cross clears everything @layout', async ({ page, context }) => {
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation(MALL);
   await ready(page);
@@ -402,7 +402,7 @@ test('directions lights both ends when both are buildings', async ({ page }) => 
     { timeout: 10000 }).toBe(2);
 });
 
-test('the sheet has its own dismiss, matching the search bar cross', async ({ page }) => {
+test('the sheet has its own dismiss, matching the search bar cross @layout', async ({ page }) => {
   await ready(page);
   await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 20000 });
   await page.fill('#q', 'riley');
