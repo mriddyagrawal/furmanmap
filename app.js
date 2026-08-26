@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · tags';
+const BUILD = '2026-08-25 · fidelity';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -324,11 +324,24 @@ function recolourBasemap(map) {
   }
 }
 
+/* MapLibre simplifies GeoJSON with Douglas-Peucker when it builds its internal
+ * tiles, at a default tolerance of 0.375. Measured on this data it costs Plyler
+ * Hall a third of its outline — 78 vertices down to 52 — and Trone nearly a
+ * fifth. Douglas-Peucker keeps the extreme points and deletes what lies between
+ * them, so a curve does not become smoother, it becomes fewer longer straight
+ * segments. Angular, which is exactly how it looked.
+ *
+ * That default is tuned for city- and country-scale data. One campus is not
+ * that: measured here, turning it off costs 7ms against 357 for 24% more
+ * vertices, which is nothing.
+ */
+const FULL_FIDELITY = { tolerance: 0 };
+
 function addLayers(map, buildings, boundary) {
   // The boundary is still needed as geometry — it is what the veil is cut
   // from — but it is no longer drawn. A dashed outline and a veil were saying
   // the same thing twice, and the veil says it without adding a line to read.
-  map.addSource('boundary', { type: 'geojson', data: boundary });
+  map.addSource('boundary', { type: 'geojson', data: boundary, ...FULL_FIDELITY });
 
   // Everything beyond the campus outline is veiled: a world-covering polygon
   // with the boundary punched out of it. Off-campus detail still reads for
@@ -351,7 +364,7 @@ function addLayers(map, buildings, boundary) {
     paint: { 'fill-color': '#efeaf3', 'fill-opacity': .85 } }, firstWater);
 
   try {
-    map.addSource('offcampus', { type: 'geojson', data: turf.mask(boundary.features[0]) });
+    map.addSource('offcampus', { type: 'geojson', data: turf.mask(boundary.features[0]), ...FULL_FIDELITY });
     map.addLayer({ id: 'offcampus-veil', type: 'fill', source: 'offcampus',
       paint: { 'fill-color': '#f7f6f3', 'fill-opacity': .55 } });
   } catch (e) { console.warn('no campus boundary to veil against', e); }
@@ -365,11 +378,12 @@ function addLayers(map, buildings, boundary) {
       type: 'FeatureCollection',
       features: buildings.features.filter(f => f.properties.on_campus)
         .map(f => ({ ...f, properties: { ...f.properties, fid: f.id } }))
-    }
+    },
+    ...FULL_FIDELITY
   });
-  map.addSource('route', { type: 'geojson', data: empty() });
-  map.addSource('route-done', { type: 'geojson', data: empty() });
-  map.addSource('leader', { type: 'geojson', data: empty() });
+  map.addSource('route', { type: 'geojson', data: empty(), ...FULL_FIDELITY });
+  map.addSource('route-done', { type: 'geojson', data: empty(), ...FULL_FIDELITY });
+  map.addSource('leader', { type: 'geojson', data: empty(), ...FULL_FIDELITY });
 
   // Buildings are deliberately quiet. Painting all five hundred of them in
   // Furman purple left nothing able to stand out — the reference maps both keep
