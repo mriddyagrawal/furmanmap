@@ -73,6 +73,10 @@ html, body {
   box-shadow: var(--shadow); color: var(--ink-soft);
 }
 #searchbar .icon { color: var(--ink-soft); }
+/* The mark stands in for the search glyph. It is the plain pin, not the Bell
+   Tower one: at 22px the tower's spire, arches and columns collapse into a
+   smudge, where the pin silhouette still reads. */
+#searchbar .mark { width: 22px; height: 22px; flex: none; display: block; }
 #q {
   flex: 1; min-width: 0; border: 0; background: none; color: var(--ink);
   font-family: inherit;                       /* inputs do not inherit by default */
@@ -241,4 +245,14 @@ body[data-mode="nav"] #endpoints { opacity: .96; }
   border-bottom: 17px solid var(--dot); opacity: .8;
 }
 
-.maplibregl-ctrl-bottom-right { display: none; }   /* our own FABs replace these */
+/* Our own FABs replace MapLibre's zoom and geolocate buttons — but the
+ * attribution lives in this corner too, and hiding it took the OpenStreetMap
+ * credit with it. That credit is an ODbL licence obligation, not decoration.
+ * Hide the control group, keep the attribution, and lift it clear of the sheet. */
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group { display: none; }
+.maplibregl-ctrl-bottom-left {
+  bottom: calc(var(--sheet-h, 0px) + env(safe-area-inset-bottom));
+  transition: bottom .18s ease;
+}
+.maplibregl-ctrl-attrib { font-size: 10px; }
+.maplibregl-ctrl-attrib a { color: var(--ink-soft); }

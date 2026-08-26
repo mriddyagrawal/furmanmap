@@ -256,13 +256,25 @@ test('the site is installable and carries its own icon', async ({ page }) => {
   }
 });
 
-test('the search box still shows a search icon', async ({ page }) => {
-  // The magnifying glass is what tells someone the bar is for typing into. At
-  // 20px the logo's tower detail disappears entirely, so swapping it in would
-  // cost the affordance and gain an unreadable smudge.
+test('the search box carries the site mark, and it loads', async ({ page }) => {
+  // The mark replaces the magnifying glass. The affordance now rests on the
+  // placeholder text, so the mark must at least render — a broken image would
+  // leave the field with no leading element at all.
   await ready(page);
-  const svg = page.locator('#searchbar svg').first();
-  await expect(svg).toBeVisible();
-  const html = await svg.innerHTML();
-  expect(html, 'a circle and a handle — a magnifying glass').toMatch(/circle/);
+  const mark = page.locator('#searchbar .mark');
+  await expect(mark).toBeVisible();
+  const ok = await mark.evaluate(el => el.complete && el.naturalWidth > 0);
+  expect(ok, 'the mark image actually decoded').toBe(true);
+});
+
+test('OpenStreetMap attribution is visible — it is a licence obligation', async ({ page }) => {
+  // Hiding MapLibre's bottom-right control group once took the attribution with
+  // it. ODbL requires the credit to be shown, so this asserts it is on screen
+  // rather than merely present in the DOM.
+  await ready(page);
+  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 25000 });
+  const attrib = page.locator('.maplibregl-ctrl-attrib');
+  await expect(attrib).toBeVisible();
+  await expect(attrib).toContainText(/OpenStreetMap/);
+  await expect(attrib).toContainText(/Made by Mridul/);
 });
