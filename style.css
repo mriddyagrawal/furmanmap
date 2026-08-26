@@ -218,8 +218,11 @@ body[data-mode="nav"]        .pane-nav   { display: flex; }
   position: absolute; z-index: 2; left: 0; right: 0;
   bottom: calc(var(--sheet-h, 0px) + 4px + env(safe-area-inset-bottom));
   margin: 0; padding: 0 74px 0 40px;      /* clear of the (i) and the buttons */
-  font-size: 11px; color: var(--muted); text-align: center;
+  font-size: 11px; color: var(--ink-soft); text-align: center;
   pointer-events: none; transition: bottom .18s ease;
+  /* It floats over the map, so it has to survive whatever is beneath it — a
+     halo rather than a plate, which would look like a control. */
+  text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 6px var(--paper);
 }
 #build a { pointer-events: auto; }
 #build a { color: var(--muted); text-decoration: none; font-weight: 600; }
