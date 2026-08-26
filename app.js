@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-25 · mark2';
+const BUILD = '2026-08-25 · tags';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -62,8 +62,31 @@ const CATEGORY = {
   arts_centre: 'Arts',
   museum: 'Museum',
   parking: 'Parking',
-  hospital: 'Health',
-  clinic: 'Health',
+  hospital: 'Hospital',
+  clinic: 'Health Center',
+  doctors: 'Health Center',
+  centre: 'Health Center',
+  pharmacy: 'Pharmacy',
+  conference_centre: 'Conference Center',
+  guardhouse: 'Guardhouse',
+  tower: 'Landmark',
+  monument: 'Landmark',
+  attraction: 'Landmark',
+  civic: 'Civic Building',
+  public: 'Civic Building',
+  bandstand: 'Performance',
+  music_school: 'Music',
+  studio: 'Studio',
+  post_office: 'Post Office',
+  bank: 'Bank',
+  bar: 'Dining',
+  pub: 'Dining',
+  ice_cream: 'Dining',
+  bicycle_parking: 'Bike Parking',
+  toilets: 'Restrooms',
+  fuel: 'Fuel',
+  kindergarten: 'Childcare',
+  childcare: 'Childcare',
   office: 'Offices',
   retail: 'Shop',
   commercial: 'Shop',
@@ -81,7 +104,7 @@ const titleCase = v => String(v).replace(/_/g, ' ')
 /* amenity is more specific than building, so it wins: a library tagged
    building=university should read "Library", not "Academic Building". */
 function categoryOf(props) {
-  for (const key of ['amenity', 'building']) {
+  for (const key of ['amenity', 'healthcare', 'tourism', 'leisure', 'man_made', 'building']) {
     const v = props[key];
     if (!v || v === 'yes') continue;
     return CATEGORY[v] || titleCase(v);
