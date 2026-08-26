@@ -341,3 +341,57 @@ test('panning the map does not rewrite the URL', async ({ page }) => {
   expect(page.url(), 'the URL stayed put while the map moved').toBe(before);
   expect(page.url()).not.toMatch(/#\d/);
 });
+
+test('usage counts never carry a location or anything personal', async ({ page, context }) => {
+  // This app knows precisely where someone is standing. That is the one thing
+  // that must never leave the phone, so the assertion is not "we tried to avoid
+  // it" but "nothing resembling a coordinate was passed, on any event."
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation({ longitude: -82.4392, latitude: 34.9245 });
+  await page.addInitScript(() => {
+    window.__sent = [];
+    window.umami = { track: (name, props) => window.__sent.push({ name, props }) };
+  });
+  await ready(page);
+
+  await page.locator('#fab-locate').click();
+  await page.fill('#q', 'plyler');
+  await page.locator('#suggest li:not(.here)').first().click();
+  await page.locator('#p-directions').click();
+  await page.locator('#d-go').click();
+  await expect(page.locator('body')).toHaveAttribute('data-mode', 'nav');
+  await page.locator('#n-stop').click();
+
+  const sent = await page.evaluate(() => window.__sent);
+  expect(sent.length, 'events were recorded at all').toBeGreaterThan(2);
+
+  const blob = JSON.stringify(sent);
+  // Furman sits near 34.9 N, -82.4 E. Any number of that shape is a position.
+  expect(blob, `payload contained a coordinate: ${blob}`).not.toMatch(/34\.9\d{3}/);
+  expect(blob).not.toMatch(/-82\.4\d{3}/);
+  // And nothing that identifies a person or a session.
+  for (const forbidden of ['lat', 'lon', 'lng', 'coord', 'email', 'user', 'session', 'ip']) {
+    expect(blob.toLowerCase(), `payload mentioned "${forbidden}"`).not.toContain(`"${forbidden}`);
+  }
+
+  // Distances are bucketed rather than exact, since a precise length beside a
+  // building name starts to describe one person's movement.
+  const walk = sent.find(e => e.name === 'walk_start');
+  expect(walk, 'a walk was recorded').toBeTruthy();
+  expect(walk.props.distance, 'distance is a bucket').toMatch(/^(<150m|150-300m|300-600m|600m-1km|>1km)$/);
+});
+
+test('the map works identically with analytics blocked', async ({ page }) => {
+  // The script is third-party and will be blocked for plenty of people. Nothing
+  // about the map may depend on it having loaded.
+  await page.addInitScript(() => { delete window.umami; });
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await ready(page);
+  await page.fill('#q', 'duke');
+  await page.locator('#suggest li:not(.here)').first().click();
+  await expect(page.locator('body')).toHaveAttribute('data-mode', 'place');
+  await page.locator('#p-directions').click();
+  await expect(page.locator('#endpoints')).toBeVisible();
+  expect(errors, `page errors: ${errors.join(' | ')}`).toEqual([]);
+});

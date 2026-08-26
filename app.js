@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-26 · legible';
+const BUILD = '2026-08-26 · counts';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -19,6 +19,34 @@ const OFF_ROUTE_M = 40;
 const HEADING_SMOOTH_MS = 250;
 
 const $ = id => document.getElementById(id);
+
+/* ---------- anonymous usage counts ---------- */
+
+/* Enough to answer "is anyone using this, and does it work for them" without
+ * knowing anything about who they are. No accounts, no cookies, no
+ * fingerprinting, and — the rule that matters most here — no coordinates. This
+ * app knows exactly where somebody is standing, and that is precisely the thing
+ * that must never leave the phone.
+ *
+ * Building names are sent, because they are public places rather than personal
+ * data, and knowing that everyone searches for Plyler is useful to Furman.
+ *
+ * Inert until a site id is configured, and silent if the script is blocked, so
+ * the app behaves identically with analytics absent, refused or broken.
+ */
+function track(event, props) {
+  try {
+    if (!window.umami || typeof window.umami.track !== 'function') return;
+    window.umami.track(event, props);
+  } catch (e) { /* analytics must never break the map */ }
+}
+
+/* Bucket a distance instead of reporting it. A metre-accurate journey length
+   paired with a building name starts to describe an individual's movement;
+   "300-600m" answers the same question about the app without doing that. */
+const distanceBucket = m =>
+  m < 150 ? '<150m' : m < 300 ? '150-300m' : m < 600 ? '300-600m'
+  : m < 1000 ? '600m-1km' : '>1km';
 const state = { mode: 'browse', editing: 'to' };
 
 /* ---------- formatting ---------- */
@@ -625,6 +653,7 @@ function clearSelection(opts) {
 /* ---------- place ---------- */
 
 function selectPlace(feature, { fly }) {
+  track('place', { name: nameOf(feature) });
   state.to = feature;
   if (!state.from && state.here) useMyLocationAsStart();
   $('p-name').textContent = nameOf(feature);
@@ -669,6 +698,7 @@ function showPlaceEta() {
 /* ---------- directions ---------- */
 
 function openDirections() {
+  track('directions', { to: nameOf(state.to) });
   if (state.here && !state.from) useMyLocationAsStart();
   setMode('directions');
   refreshEndpoints();
@@ -769,6 +799,13 @@ const leg = (p, q) => turf.lineString([p, q]);
 function startNav() {
   if (!state.route) return;
   if (!window.isSecureContext) return note('Navigation needs an https:// address.');
+  track('walk_start', {
+    to: state.route.to,
+    distance: distanceBucket(state.route.total),
+    stepfree: $('stepfree').checked ? 'yes' : 'no'
+  });
+  state.walkStarted = Date.now();
+  state.arrivedSent = false;
   setMode('nav');
   state.following = true;
   state.cam = null;              // re-seed from the map's current pose
@@ -779,6 +816,8 @@ function startNav() {
 }
 
 function stopNav() {
+  // A stop before arrival is the other half of the completion rate.
+  if (state.mode === 'nav' && !state.arrivedSent) track('walk_abandoned', { to: state.route?.to });
   setSource('route-done', empty());
   state.cam = null;
   state.following = false;
@@ -792,6 +831,14 @@ function navTick() {
   if (state.mode !== 'nav' || !state.route || !state.here) return;
   const { along, offBy, left } = progressAlong(state.route.line, state.route.total, state.here);
   const done = left < ARRIVED_M;
+  // Once only: navTick runs on every position update, and arrival stays true.
+  if (done && !state.arrivedSent) {
+    state.arrivedSent = true;
+    track('walk_arrived', {
+      to: state.route.to,
+      minutes: String(Math.max(1, Math.round((Date.now() - state.walkStarted) / 60000)))
+    });
+  }
   paintProgress(along);
   $('n-eta').innerHTML = done
     ? '<strong>Arrived</strong><span></span>'

@@ -34,6 +34,30 @@ the spot in OSM.
 Edits appear here within a week — sooner if the refresh job is run by hand. Never copy
 from Google Maps or Furman's PDF map; that is a copyright violation.
 
+## Usage counts
+
+Off by default. To switch them on, create a free [Umami Cloud](https://umami.is)
+account, add this site, and paste the site id into the commented-out script tag
+in `index.html`. Nothing loads and nothing is sent until you do.
+
+What it records, and nothing else:
+
+| Event | Answers |
+|---|---|
+| `place` | which buildings people look for |
+| `directions` | how many go on to want a route |
+| `walk_start` | how many actually set off, and whether step-free was on |
+| `walk_arrived` | how many got there, and roughly how long it took |
+| `walk_abandoned` | and how many gave up |
+
+`walk_arrived / walk_start` is the completion rate — the number worth quoting.
+
+**No coordinates are ever sent.** This app knows exactly where someone is
+standing, and that stays on the phone: distances are bucketed rather than exact,
+and a test drives the whole flow asserting that nothing resembling a Furman
+coordinate appears in any payload. No cookies, no accounts, no fingerprinting,
+so no consent banner is required.
+
 ## How it fits together
 
 - [`plans/masterplan.md`](plans/masterplan.md) — phases, exit criteria, test strategy
