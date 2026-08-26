@@ -158,7 +158,9 @@ def main():
     if not os.path.exists(SRC):
         sys.exit("missing %s — run scripts/fetch-osm.sh first" % SRC)
     with open(SRC) as fh:
-        elements = json.load(fh)["elements"]
+        raw = json.load(fh)
+    elements = raw["elements"]
+    osm_base = raw.get("osm_base")
 
     # Standalone tagged nodes only — ways carry their own inline geometry now.
     nodes = {e["id"]: (e["lon"], e["lat"])
@@ -258,6 +260,10 @@ def main():
     meta = {
         "generated": datetime.datetime.now(datetime.timezone.utc)
                              .strftime("%Y-%m-%d"),
+        # The moment in OSM this snapshot represents. fetch-osm.sh reads it back
+        # as the floor a future refresh has to beat, so a mirror serving older
+        # data cannot overwrite newer.
+        "osm_base": osm_base,
         "buildings": len(buildings), "paths": len(paths),
         "entrances": len(entrances),
     }

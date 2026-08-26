@@ -12,12 +12,23 @@ set -euo pipefail
 
 BBOX="${BBOX:-34.912,-82.457,34.938,-82.421}"   # S,W,N,E — campus + fringe
 ROUNDS="${ROUNDS:-6}"
-# How far behind live OSM a mirror may be before we would rather wait for
-# another one. Overpass normally tracks within a minute or two.
-MAX_LAG_MIN="${MAX_LAG_MIN:-90}"
+
 PER_TRY_TIMEOUT="${PER_TRY_TIMEOUT:-90}"
 DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
 OUT="$DIR/campus.osm.json"
+
+# Never accept data older than what we already have.
+#
+# A "how far behind live OSM" threshold asks the wrong question: pull on a
+# Monday for an edit made on Thursday and any honest answer looks stale. What
+# actually matters is that a refresh never goes backwards. Every Overpass
+# response states the age of the database that answered it, so a mirror serving
+# older data than our committed snapshot is refused outright, whatever its age.
+#
+# The floor comes from data/meta.json, which is committed, so it survives a
+# clean checkout and a CI runner with no history.
+HAVE="$(jq -r '.osm_base // empty' "$DIR/meta.json" 2>/dev/null)"
+[ -n "$HAVE" ] && echo "current snapshot is from $HAVE"
 
 # OSM infrastructure filters bare-curl/python User-Agents. Identify the app
 # and give a contact route — the repo URL, not a personal email.
@@ -70,16 +81,14 @@ fetch_part () {
       # silently reverted a name fixed the day before and dropped two others.
       # Every Overpass response carries the age of the database that answered.
       base="$(jq -r '.osm3s.timestamp_osm_base // empty' "$tmp")"
-      if [ -n "$base" ]; then
-        age=$(( ($(date -u +%s) - $(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$base" +%s 2>/dev/null \
-                                  || date -u -d "$base" +%s)) / 60 ))
-        if [ "$age" -gt "$MAX_LAG_MIN" ]; then
-          echo "  · $name: ${url#https://} is $age min behind OSM, refusing it"
-          rm -f "$tmp"; sleep 2; continue
-        fi
+      if [ -n "$base" ] && [ -n "$HAVE" ] && [[ "$base" < "$HAVE" ]]; then
+        # ISO-8601 UTC sorts lexicographically, so a string compare is a date
+        # compare and needs no date(1) — whose flags differ on macOS and Linux.
+        echo "  · $name: ${url#https://} has $base, older than our $HAVE — refusing"
+        rm -f "$tmp"; sleep 2; continue
       fi
       mv "$tmp" "$dest"
-      echo "  ✓ $name: $(jq '.elements|length' "$dest") elements  (round $round, ${url#https://}, ${age:-?} min behind)"
+      echo "  ✓ $name: $(jq '.elements|length' "$dest") elements  (round $round, ${url#https://}, osm ${base:-?})"
       return 0
     fi
     # Overpass failures are verbose — surface the reason instead of guessing.
@@ -104,9 +113,13 @@ done
 # Merge. With `out geom` the parts no longer share skeleton node copies, but
 # keep the tagged-copy preference: it is free, and it is the guard that would
 # have caught entrances silently vanishing when the parts did overlap.
-jq -s '{elements: (map(.elements) | add
+# The snapshot is only as fresh as its stalest part, so the recorded timestamp
+# is the minimum across them.
+jq -s '{osm_base: ([.[].osm3s.timestamp_osm_base] | map(select(. != null)) | min),
+        elements: (map(.elements) | add
         | group_by((.type // "") + "/" + ((.id // 0)|tostring))
         | map(max_by(if has("tags") then 1 else 0 end)))}' \
    "$tmpdir"/*.json > "$OUT"
 
 echo "✓ wrote $OUT ($(jq '.elements|length' "$OUT") elements, $(( $(wc -c < "$OUT") / 1024 )) KB)"
+echo "  snapshot is OSM as of $(jq -r '.osm_base // "unknown"' "$OUT")"
