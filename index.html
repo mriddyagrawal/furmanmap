@@ -114,12 +114,13 @@
 <p id="build"></p>
 
 <!-- Anonymous usage counts. Cookieless, no personal data, and no consent
-     banner required. Paste the site id from a free Umami Cloud account into
-     data-website-id to switch it on; until then nothing loads and nothing is
-     sent. See ANALYTICS in README.
+     banner required. What is sent is defined by track() in app.js: building
+     names, which are public places, and bucketed distances. No coordinate ever
+     leaves the device. Deferred, so it never delays the map, and the app is
+     tested to behave identically when this is blocked. See ANALYTICS in
+     README. -->
 <script defer src="https://cloud.umami.is/script.js"
-        data-website-id="PASTE-SITE-ID-HERE"></script>
--->
+        data-website-id="aab449d8-a9a3-45eb-a4ad-756a3320b5e1"></script>
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/fuse.js@7.0.0/dist/fuse.min.js"></script>
 <script src="https://unpkg.com/@turf/turf@7.1.0/turf.min.js"></script>
