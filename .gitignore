@@ -266,3 +266,6 @@ data/*.tmp
 
 # Raw Overpass response — a build intermediate, regenerate with npm run data
 data/campus.osm.json
+
+# Cached Overpass responses per part (see scripts/fetch-osm.sh)
+data/.parts/
