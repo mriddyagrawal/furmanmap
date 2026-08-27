@@ -430,16 +430,46 @@ const FULL_FIDELITY = { tolerance: 0 };
  * zoom doubles it, so the numbers below hold a path at roughly 2m of ground
  * regardless of how far in you are, with a floor so it stays visible when
  * zoomed out past the point where 2m is half a pixel.
+ *
+ * The casing is only as wide as the path plus its two edges, so the border
+ * thickness is (casing - path) / 2. At the first values that worked out to
+ * 0.9px a side at browsing zoom and 3px zoomed in, which drew a path with a
+ * heavy outline rather than a path with an edge. Roughly halved: 0.55px a side
+ * at zoom 17, 1.2px at zoom 20.
  */
-const PATH_WIDTH  = ['interpolate', ['exponential', 2], ['zoom'],
-                     14, 1.2, 16, 1.8, 17, 2.6, 18, 4.4, 19, 8, 20, 15];
-// The casing is only as wide as the path plus its two edges, so the border
-// thickness is (casing - path) / 2. At the first values that worked out to 0.9px
-// a side at browsing zoom and 3px zoomed in, which drew a path with a heavy
-// outline rather than a path with an edge. Roughly halved: 0.55px a side at
-// zoom 17, 1.2px at zoom 20.
-const PATH_CASING = ['interpolate', ['exponential', 2], ['zoom'],
-                     14, 1.9, 16, 2.7, 17, 3.7, 18, 5.8, 19, 9.8, 20, 17.4];
+
+/* Roads live in this data too, and must not be drawn as footpaths.
+ *
+ * paths.geojson carries 541 service roads and 100 residential ways against
+ * 426 footways, because a campus drive is usually walkable and the router
+ * needs it. Painting them all with one ribbon meant the map asserted that
+ * Bill Timmons Drive and the footpath beside it were the same kind of thing.
+ * Being walkable is not the same claim as being a walkway.
+ *
+ * The distinction is carried twice over, because either alone is too quiet on
+ * a base this pale: width, which tracks real ground width (a service road is
+ * about 5m against a footpath's 2m, hence 1.9x), and hue — roads go warm grey,
+ * while the pale lilac stays reserved for the walking network, which is the
+ * same logic that keeps the route purple. Footways stay the brightest line on
+ * the map, because on a walking map they are the subject.
+ */
+const ROAD_KINDS = ['service', 'residential', 'unclassified', 'tertiary', 'trunk',
+                    'tertiary_link', 'trunk_link', 'primary', 'secondary', 'road', 'track'];
+const IS_ROAD = ['match', ['get', 'highway'], ROAD_KINDS, true, false];
+
+/* Zoom on the outside, the road test on the inside — not the other way round.
+ * A ['zoom'] interpolate is only legal at the top level of a paint property;
+ * wrapping one in a ['case'] is rejected outright, and MapLibre drops the whole
+ * layer rather than the bad property, so every path silently vanishes. It
+ * validates on addLayer but not on setPaintProperty, which is how it survived
+ * being tried in the console. Each stop therefore picks road-or-footway. */
+const kind = (road, foot) => ['case', IS_ROAD, road, foot];
+const WIDTH_BY_KIND = ['interpolate', ['exponential', 2], ['zoom'],
+                       14, kind(2.3, 1.2),  16, kind(3.4, 1.8),  17, kind(4.9, 2.6),
+                       18, kind(8.4, 4.4),  19, kind(15.2, 8),   20, kind(28.5, 15)];
+const CASING_BY_KIND = ['interpolate', ['exponential', 2], ['zoom'],
+                       14, kind(3.6, 1.9),  16, kind(5.1, 2.7),  17, kind(7, 3.7),
+                       18, kind(11, 5.8),   19, kind(18.6, 9.8), 20, kind(33.1, 17.4)];
 
 function emphasisePaths(map) {
   // The basemap's own path layers are hidden rather than styled: we draw these
@@ -589,10 +619,12 @@ function addLayers(map, buildings, boundary, paths) {
     paint: { 'line-color': '#582C83', 'line-width': 2.5, 'line-dasharray': [1, 1.6], 'line-opacity': .75 } }, LABELS);
   map.addLayer({ id: 'paths-casing', type: 'line', source: 'paths',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#b3a7bd', 'line-width': PATH_CASING } }, LABELS);
+    paint: { 'line-color': ['case', IS_ROAD, '#ccc5bb', '#b3a7bd'],
+             'line-width': CASING_BY_KIND } }, LABELS);
   map.addLayer({ id: 'paths-line', type: 'line', source: 'paths',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#f6f3f8', 'line-width': PATH_WIDTH } }, LABELS);
+    paint: { 'line-color': ['case', IS_ROAD, '#e8e4dd', '#f6f3f8'],
+             'line-width': WIDTH_BY_KIND } }, LABELS);
 
   // Drawn first so the live route paints over it where they meet.
   map.addLayer({ id: 'route-done-line', type: 'line', source: 'route-done',
