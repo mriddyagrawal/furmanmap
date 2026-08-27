@@ -123,6 +123,12 @@ test('swap reverses the route without changing its length', async ({ page, conte
 });
 
 test('Go enters navigation, Stop comes back', async ({ page, context }) => {
+  // The heaviest test here: a geolocation fix, a full route, a mode change and
+  // a camera animation, all in one. It costs ~6s locally and roughly three
+  // times that on a shared runner driving WebGL through SwiftShader, which put
+  // it over the 30s cap while every assertion still passed. slow() triples the
+  // budget rather than relaxing anything the test actually checks.
+  test.slow();
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation(MALL);
   await ready(page);
