@@ -3,7 +3,11 @@
 A walking wayfinder for Furman University — search a building, get a walking route
 with distance and time, with a step-free mode for accessible routing.
 
-**Live: https://mriddyagrawal.github.io/furmanmap/**
+**Live: https://acrossfurman.com**
+
+Also at https://mriddyagrawal.github.io/furmanmap/ — the GitHub Pages address the
+custom domain points at. The intended home is a Furman subdomain; this is the
+signpost until then.
 
 Built on OpenStreetMap data. Static site, no backend: the basemap streams from
 [OpenFreeMap](https://openfreemap.org/), and routing runs in your browser.
