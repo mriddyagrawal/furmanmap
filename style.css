@@ -235,6 +235,7 @@ body[data-mode="nav"]        .pane-nav   { display: flex; }
      0  0   5px #fff,  0  0   9px #fff;
 }
 #build a { pointer-events: auto; color: #3d2a55; text-decoration: none; }
+#updated { margin: 8px 0 0; font-size: 11px; color: var(--muted); text-align: center; }
 #build a:hover { text-decoration: underline; }
 
 /* ---------- mode visibility ---------- */

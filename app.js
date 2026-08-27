@@ -9,7 +9,7 @@
  * means nothing new has to be learned.
  */
 
-const BUILD = '2026-08-26 · readable';
+const BUILD = '2026-08-27 · independent';
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const CENTER = [-82.4392, 34.9245];
@@ -262,14 +262,23 @@ async function main() {
       ? `Last updated ${new Date(when + 'T00:00:00Z').toLocaleDateString(undefined,
           { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}`
       : 'Last updated — unknown';
+
+    // The disclaimer goes on the map, where it is seen without any action.
+    // "Affiliated" covers an organisational link; "endorsed" covers the
+    // implication that the university approved it, which is the assumption a
+    // purple map of their campus invites more readily than the first.
     $('build').innerHTML =
       `<a href="https://github.com/mriddyagrawal/furmanmap" target="_blank" rel="noopener">`
-      + `Made by Mridul</a> · ${updated}`;
-    const stamp = `${BUILD} · ${state.places.length} places · `
-                + `${state.graph.size.toLocaleString()} path nodes`;
-    $('build').title = stamp;
-    $('searchbar').title = stamp;
-    console.info(`Furman Wayfinder — ${stamp}`);
+      + `Made by Mridul</a> · Not affiliated with or endorsed by Furman University`;
+
+    // The date stays, in the sheet, because "how current is this?" is a real
+    // question about a crowd-maintained map and the answer belongs next to the
+    // thing it describes.
+    $('updated').textContent = updated;
+    $('build').title = `${BUILD} · ${state.places.length} places · `
+      + `${state.graph.size.toLocaleString()} path nodes · ${updated}`;
+    console.info(`Furman Wayfinder — ${BUILD} · ${updated}`);
+    $('searchbar').title = `${BUILD} · ${state.places.length} places`;
   });
 
   wireSearch();

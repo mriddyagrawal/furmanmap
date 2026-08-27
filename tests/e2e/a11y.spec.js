@@ -222,7 +222,7 @@ test('the footer says how fresh the map is, not what build it is', async ({ page
   await page.locator('#suggest li:not(.here)').first().click();
   // Locale decides whether the day or the month comes first, so assert the
   // shape — a date containing a four-digit year — not one country's ordering.
-  await expect(page.locator('#build')).toContainText(/Last updated .*\b20\d{2}\b/);
+  await expect(page.locator('#updated')).toContainText(/Last updated .*\b20\d{2}\b/);
   // The build id still exists for telling a stale cache from a real bug — it
   // just lives in the tooltip now rather than on screen.
   await expect(page.locator('#build')).toHaveAttribute('title', /places/);
@@ -281,19 +281,22 @@ test('OpenStreetMap attribution is visible — it is a licence obligation', asyn
   await expect(attrib).toContainText(/OpenStreetMap/);
 });
 
-test('the byline is readable without opening the credits, or anything else @layout', async ({ page }) => {
-  // It used to live inside the sheet, which is hidden until a place is chosen —
-  // so on the screen everyone sees first, it was not there at all.
+test('the disclaimer is on the first screen, unprompted @layout', async ({ page }) => {
+  // A disclaimer only works if it is seen without asking. It used to live in the
+  // sheet, which stays hidden until a place is chosen — so on the screen
+  // everyone sees first it was not there at all.
   await ready(page);
   await expect(page.locator('body')).toHaveAttribute('data-mode', 'browse');
   await expect(page.locator('#build')).toBeInViewport();
   await expect(page.locator('#build')).toContainText(/Made by Mridul/);
-  await expect(page.locator('#build')).toContainText(/Last updated/);
+  await expect(page.locator('#build')).toContainText(
+    /not affiliated with or endorsed by Furman University/i);
 
-  // And it stays out of the way once the sheet comes up.
+  // Still there once the sheet is up, where the date joins it.
   await page.fill('#q', 'duke');
   await page.locator('#suggest li:not(.here)').first().click();
   await expect(page.locator('#build')).toBeInViewport();
+  await expect(page.locator('#updated')).toContainText(/Last updated .*\b20\d{2}\b/);
 });
 
 test('building outlines are not simplified away', async ({ page }) => {
