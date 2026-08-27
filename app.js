@@ -257,9 +257,15 @@ async function main() {
     // What a visitor wants to know is how current the map is. The build id
     // still matters for telling a stale cache from a real bug, so it moves to
     // the tooltip and the console rather than disappearing.
-    const when = state.meta && state.meta.generated;
+    // osm_base, not generated. `generated` is when this build ran, which is
+    // today even when every part fell back to cache and nothing actually moved —
+    // exactly the "refresh that looks like it happened" this pipeline exists to
+    // prevent. osm_base is the moment in OSM the data represents, and it is
+    // already carried honestly as the minimum across parts.
+    const when = state.meta && (state.meta.osm_base || state.meta.generated);
     const updated = when
-      ? `Last updated ${new Date(when + 'T00:00:00Z').toLocaleDateString(undefined,
+      ? `Last updated ${new Date(when.length > 10 ? when : when + 'T00:00:00Z')
+          .toLocaleDateString(undefined,
           { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}`
       : 'Last updated — unknown';
 
@@ -336,14 +342,38 @@ function flushPending() {
  *
  * This keeps the base light — the purple route still clears 4.6:1 against the
  * strongest of these — while pushing adjacent categories at least 1.12:1 apart
- * and giving water an actual blue.
+ * and giving water a blue that still reads as water.
+ *
+ * Landcover chroma is budgeted against the buildings, not chosen for its own
+ * sake. Salience tracks saturation, so the first pass inverted the map's
+ * meaning: measured in CIE LCh, forest sat at C*27.4 and water at C*21.9
+ * against a named building's C*12.3 — the scenery was twice as loud as the
+ * thing you are trying to walk to. Off-campus was already fine, because the
+ * veil knocks it to C*4-7; the problem was only ever inside the boundary,
+ * where the tint sits BELOW these layers and so cannot mute them.
+ *
+ * The greens now sit under that 12.3 ceiling. Dropping saturation costs the
+ * hue separation that used to tell these categories apart, so the lightness
+ * steps are widened to carry it instead — that is why they ladder 88/92/96.5
+ * rather than clustering.
+ *
+ * Park stops at C*11.0 rather than going lower, and that floor is a test
+ * result, not a preference: below it, park and ordinary land converge to
+ * deltaE 5.5 and a lawn stops being distinguishable from a verge. That is the
+ * exact positron failure this palette exists to correct, so it is guarded.
+ *
+ * Water is held deliberately above the ceiling, at C*16.6. It is the one
+ * category with a test behind it: positron ships the lake at 4% saturation,
+ * i.e. grey, and a grey lake on a campus built around one is its own bug. The
+ * guard asks for >20% saturation, so the lake is calmed 24% from where it was
+ * rather than muted outright.
  */
 const PALETTE = [
-  [/water|lake|ocean|sea|reservoir/, '#9ed3ef'],
-  [/waterway|river|stream|canal/,    '#9ed3ef'],
-  [/wood|forest/,                    '#bfdcac'],
-  [/park|cemetery|pitch|playground/, '#d8ecc6'],
-  [/grass|meadow|farmland|scrub/,    '#ecf7e2'],
+  [/water|lake|ocean|sea|reservoir/, '#add2e8'],
+  [/waterway|river|stream|canal/,    '#add2e8'],
+  [/wood|forest/,                    '#d4dfcc'],
+  [/park|cemetery|pitch|playground/, '#e1ebd7'],
+  [/grass|meadow|farmland|scrub/,    '#f2f6ef'],
   [/sand|beach/,                     '#f2e9d2'],
   [/building/,                       '#ddd6cc'],
   [/residential|landuse/,            '#f0ede7'],
@@ -541,25 +571,39 @@ function addLayers(map, buildings, boundary, paths) {
               'text-size': ['interpolate', ['linear'], ['zoom'], 16.2, 10, 19, 12] },
     paint: { 'text-color': '#4b3a63', 'text-halo-color': '#fff', 'text-halo-width': 1.4 } });
 
+  // Everything below this point is line work, and line work goes UNDER type.
+  //
+  // MapLibre stacks layers in insertion order, so adding these last put them on
+  // top of every label in the style — the basemap's street names and our own
+  // building names alike. A footpath drawn across "Furman University Lake Trail"
+  // does not read as a path crossing a label; it reads as broken text.
+  //
+  // Anchoring to the first symbol layer keeps them above the basemap's road
+  // fills, which is the point of drawing paths as surfaces at all, while
+  // putting every label back on top where it can be read. The off-campus veil
+  // stays where it is, above the basemap labels, because washing out the names
+  // of streets you are not on is deliberate.
+  const LABELS = (map.getStyle().layers.find(l => l.type === 'symbol') || {}).id;
+
   map.addLayer({ id: 'leader-line', type: 'line', source: 'leader',
-    paint: { 'line-color': '#582C83', 'line-width': 2.5, 'line-dasharray': [1, 1.6], 'line-opacity': .75 } });
+    paint: { 'line-color': '#582C83', 'line-width': 2.5, 'line-dasharray': [1, 1.6], 'line-opacity': .75 } }, LABELS);
   map.addLayer({ id: 'paths-casing', type: 'line', source: 'paths',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#b3a7bd', 'line-width': PATH_CASING } });
+    paint: { 'line-color': '#b3a7bd', 'line-width': PATH_CASING } }, LABELS);
   map.addLayer({ id: 'paths-line', type: 'line', source: 'paths',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#f6f3f8', 'line-width': PATH_WIDTH } });
+    paint: { 'line-color': '#f6f3f8', 'line-width': PATH_WIDTH } }, LABELS);
 
   // Drawn first so the live route paints over it where they meet.
   map.addLayer({ id: 'route-done-line', type: 'line', source: 'route-done',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#9a94a8', 'line-width': 5, 'line-opacity': .55 } });
+    paint: { 'line-color': '#9a94a8', 'line-width': 5, 'line-opacity': .55 } }, LABELS);
   map.addLayer({ id: 'route-casing', type: 'line', source: 'route',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#fff', 'line-width': 10, 'line-opacity': .95 } });
+    paint: { 'line-color': '#fff', 'line-width': 10, 'line-opacity': .95 } }, LABELS);
   map.addLayer({ id: 'route-line', type: 'line', source: 'route',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#582C83', 'line-width': 5.5 } });
+    paint: { 'line-color': '#582C83', 'line-width': 5.5 } }, LABELS);
 }
 
 /* ---------- search ---------- */

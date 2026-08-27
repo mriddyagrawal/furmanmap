@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Nudge, never block. A commit has already happened by the time this runs, so
+# this hook's only job is to make an unreviewed commit visible rather than
+# silent. It must not fail a commit under any circumstances.
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+[ -x "$ROOT/scripts/review-pending.sh" ] || exit 0
+
+if ! "$ROOT/scripts/review-pending.sh" >/dev/null 2>&1; then
+  echo
+  echo "  ┌─ unreviewed commit ──────────────────────────────────────────"
+  echo "  │  $(git log -1 --format='%h %s')"
+  echo "  │  Review it into comments.md:  claude \"/review-commits\""
+  echo "  └──────────────────────────────────────────────────────────────"
+fi
+exit 0

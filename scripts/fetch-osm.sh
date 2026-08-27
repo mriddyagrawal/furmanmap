@@ -18,6 +18,7 @@ DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
 OUT="$DIR/campus.osm.json"
 # Last good response per part, so one flaky mirror cannot cost a whole refresh.
 CACHE="$DIR/.parts"
+MAX_CACHE_DAYS="${MAX_CACHE_DAYS:-14}"
 
 # Never accept data older than what we already have.
 #
@@ -29,8 +30,16 @@ CACHE="$DIR/.parts"
 #
 # The floor comes from data/meta.json, which is committed, so it survives a
 # clean checkout and a CI runner with no history.
-HAVE="$(jq -r '.osm_base // empty' "$DIR/meta.json" 2>/dev/null)"
-[ -n "$HAVE" ] && echo "current snapshot is from $HAVE"
+HAVE="$(jq -r '.osm_base // empty' "$DIR/meta.json" 2>/dev/null || true)"
+# An `if`, not `[ ... ] && echo`. Under `set -e` that idiom returns 1 whenever
+# the test fails, which kills the script — so with no recorded snapshot, as on a
+# first run or a fresh clone, the fetch exited before printing anything at all.
+# This is the third bug in this file from the same idiom.
+if [ -n "$HAVE" ]; then
+  echo "current snapshot is from $HAVE"
+else
+  echo "no recorded snapshot yet — anything fetched will be accepted"
+fi
 
 # OSM infrastructure filters bare-curl/python User-Agents. Identify the app
 # and give a contact route — the repo URL, not a personal email.
@@ -82,7 +91,7 @@ fetch_part () {
       # relation at version 3 from 2014 when OSM was on version 7, which
       # silently reverted a name fixed the day before and dropped two others.
       # Every Overpass response carries the age of the database that answered.
-      base="$(jq -r '.osm3s.timestamp_osm_base // empty' "$tmp")"
+      local base; base="$(jq -r '.osm3s.timestamp_osm_base // empty' "$tmp" || true)"
       if [ -n "$base" ] && [ -n "$HAVE" ] && [[ "$base" < "$HAVE" ]]; then
         # ISO-8601 UTC sorts lexicographically, so a string compare is a date
         # compare and needs no date(1) — whose flags differ on macOS and Linux.
@@ -90,7 +99,16 @@ fetch_part () {
         rm -f "$tmp"; sleep 2; continue
       fi
       mv "$tmp" "$dest"
-      mkdir -p "$CACHE" && cp "$dest" "$CACHE/$name.json"
+      # Only cache a response that actually contains something. jq -e tests JSON
+      # truthiness, not emptiness — [] is truthy — so a 200 with zero elements
+      # passes the check above as a successful fetch. The fetch stays permissive,
+      # because a small test bbox can legitimately return no entrances, but an
+      # empty answer must never destroy the copy that would have saved us. The
+      # boundary is the sharp edge: it is matched by name, so an upstream rename
+      # returns a valid empty 200 and the campus outline disappears.
+      if [ "$(jq '.elements|length' "$dest")" -gt 0 ]; then
+        { mkdir -p "$CACHE" && cp "$dest" "$CACHE/$name.json"; } || true
+      fi
       echo "  ✓ $name: $(jq '.elements|length' "$dest") elements  (round $round, ${url#https://}, osm ${base:-?})"
       return 0
     fi
@@ -115,8 +133,29 @@ fetch_part () {
   # data` stops at the failed fetch and never rebuilds, so a refresh could
   # appear to run for days while the data stood still.
   if [ -f "$CACHE/$name.json" ]; then
+    local cached; cached="$(jq -r '.osm3s.timestamp_osm_base // empty' "$CACHE/$name.json" || true)"
+    # The same comparison a live mirror gets. The cache is gitignored and
+    # survives branch switches while meta.json is committed and does not, so a
+    # refresh on one branch then a switch to a branch holding a newer snapshot
+    # would otherwise restore older data under a higher floor — the stale-mirror
+    # bug arriving through a side door.
+    if [ -n "$cached" ] && [ -n "$HAVE" ] && [[ "$cached" < "$HAVE" ]]; then
+      echo "  ✗ $name: cached copy ($cached) predates our snapshot ($HAVE), refusing it" >&2
+      return 1
+    fi
+    # And a copy nobody has managed to refresh in a fortnight is not a fallback,
+    # it is silent staleness with one line of stderr for company.
+    # Python rather than date or stat: both differ between BSD and GNU in
+    # argument order and long forms, and the pipeline already requires Python.
+    local age_days; age_days="$(python3 -c \
+      "import os,sys,time; print(int((time.time()-os.path.getmtime(sys.argv[1]))//86400))" \
+      "$CACHE/$name.json")"
+    if [ "$age_days" -gt "$MAX_CACHE_DAYS" ]; then
+      echo "  ✗ $name: cached copy is $age_days days old, refusing it" >&2
+      return 1
+    fi
     cp "$CACHE/$name.json" "$dest"
-    echo "  ~ $name: all mirrors failed, reusing the copy from $(date -r "$CACHE/$name.json" '+%Y-%m-%d %H:%M')" >&2
+    echo "  ~ $name: all mirrors failed, reusing the copy from $(date -r "$CACHE/$name.json" '+%Y-%m-%d %H:%M') (osm ${cached:-?})" >&2
     return 0
   fi
   echo "  ✗ $name: all mirrors failed and there is no previous copy" >&2
@@ -134,8 +173,6 @@ done
 # Merge. With `out geom` the parts no longer share skeleton node copies, but
 # keep the tagged-copy preference: it is free, and it is the guard that would
 # have caught entrances silently vanishing when the parts did overlap.
-# The snapshot is only as fresh as its stalest part, so the recorded timestamp
-# is the minimum across them.
 # The snapshot is only as fresh as its stalest part, and a reused part is
 # genuinely older — so the minimum is the honest number to record.
 jq -s '{osm_base: ([.[].osm3s.timestamp_osm_base] | map(select(. != null)) | min),
