@@ -214,18 +214,27 @@ body[data-mode="nav"]        .pane-nav   { display: flex; }
 .toggle { display: flex; align-items: center; gap: 9px; font-size: 15px; }
 .toggle input { accent-color: var(--purple); width: 18px; height: 18px; }
 
+/* This sits ON the map, not in the interface, so it does not follow the theme.
+ * The basemap is light in both light and dark mode, and styling this with
+ * interface tokens gave it a dark halo on a light map in dark mode — light-grey
+ * text ringed in near-black, which is the muddle it looked like.
+ *
+ * It borrows the map's own label treatment instead: dark text, white halo, the
+ * same as every building name, so it reads as part of the map rather than as a
+ * control that lost its background. */
 #build {
   position: absolute; z-index: 2; left: 0; right: 0;
-  bottom: calc(var(--sheet-h, 0px) + 4px + env(safe-area-inset-bottom));
-  margin: 0; padding: 0 74px 0 40px;      /* clear of the (i) and the buttons */
-  font-size: 11px; color: var(--ink-soft); text-align: center;
+  bottom: calc(var(--sheet-h, 0px) + 6px + env(safe-area-inset-bottom));
+  margin: 0; padding: 0 76px 0 44px;      /* clear of the (i) and the buttons */
+  font-size: 11px; font-weight: 600; letter-spacing: .01em;
+  color: #4b4458; text-align: center;
   pointer-events: none; transition: bottom .18s ease;
-  /* It floats over the map, so it has to survive whatever is beneath it — a
-     halo rather than a plate, which would look like a control. */
-  text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 6px var(--paper);
+  text-shadow:
+     0  1px 2px #fff,  0 -1px 2px #fff,
+     1px 0  2px #fff, -1px  0  2px #fff,
+     0  0   5px #fff,  0  0   9px #fff;
 }
-#build a { pointer-events: auto; }
-#build a { color: var(--muted); text-decoration: none; font-weight: 600; }
+#build a { pointer-events: auto; color: #3d2a55; text-decoration: none; }
 #build a:hover { text-decoration: underline; }
 
 /* ---------- mode visibility ---------- */
