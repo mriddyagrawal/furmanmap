@@ -398,3 +398,29 @@ test('the map works identically with analytics blocked', async ({ page }) => {
   await expect(page.locator('#endpoints')).toBeVisible();
   expect(errors, `page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('the paths drawn are our data, not the basemap vintage', async ({ page }) => {
+  // Paths used to come from OpenFreeMap's tiles, rebuilt on their schedule,
+  // while routing used the extract we refresh. A footway mapped three days
+  // earlier was routed along while being invisible beneath the route line.
+  await ready(page);
+  await page.waitForFunction(() => window.__wayfinder.map?.isStyleLoaded?.(), null, { timeout: 25000 });
+
+  const state = await page.evaluate(async () => {
+    const m = window.__wayfinder.map;
+    m.jumpTo({ center: [-82.43880, 34.92320], zoom: 18, pitch: 0, bearing: 0 });
+    await new Promise(r => setTimeout(r, 1500));
+    return {
+      ours: m.queryRenderedFeatures({ layers: ['paths-line'] }).length,
+      // the basemap's own path layers must be off, or every path double-draws
+      basemapVisible: m.getStyle().layers
+        .filter(l => /highway_path|footway|pedestrian|track/.test(l.id.toLowerCase()))
+        .filter(l => (l.layout || {}).visibility !== 'none')
+        .map(l => l.id)
+    };
+  });
+
+  expect(state.ours, 'our own paths are painted').toBeGreaterThan(5);
+  expect(state.basemapVisible, 'basemap path layers are hidden so nothing double-draws')
+    .toEqual([]);
+});

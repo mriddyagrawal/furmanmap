@@ -239,7 +239,7 @@ async function main() {
   map.on('load', () => {
     recolourBasemap(map);
     emphasisePaths(map);
-    addLayers(map, buildings, boundary);
+    addLayers(map, buildings, boundary, paths);
     flushPending();
     highlight([state.from, state.to]);
     map.on('click', 'buildings-fill', e => {
@@ -412,24 +412,14 @@ const PATH_CASING = ['interpolate', ['exponential', 2], ['zoom'],
                      14, 1.9, 16, 2.7, 17, 3.7, 18, 5.8, 19, 9.8, 20, 17.4];
 
 function emphasisePaths(map) {
-  const paths = map.getStyle().layers.filter(l =>
-    l.type === 'line' && /highway_path|footway|pedestrian|track/.test(l.id.toLowerCase()));
-
-  for (const layer of paths) {
-    try {
-      // The casing goes in first, immediately beneath the path it outlines.
-      map.addLayer({
-        id: layer.id + '-casing', type: 'line',
-        source: layer.source, 'source-layer': layer['source-layer'],
-        filter: layer.filter, minzoom: layer.minzoom ?? 0,
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#b3a7bd', 'line-width': PATH_CASING }
-      }, layer.id);
-      map.setLayoutProperty(layer.id, 'line-cap', 'round');
-      map.setLayoutProperty(layer.id, 'line-join', 'round');
-      map.setPaintProperty(layer.id, 'line-color', '#f6f3f8');
-      map.setPaintProperty(layer.id, 'line-width', PATH_WIDTH);
-    } catch (e) { console.warn('could not case', layer.id, e.message); }
+  // The basemap's own path layers are hidden rather than styled: we draw these
+  // ourselves now, from data we refresh, and leaving both would double-draw
+  // every path — the basemap's stale copy showing through beside ours wherever
+  // the two vintages disagree.
+  for (const layer of map.getStyle().layers) {
+    if (layer.type !== 'line') continue;
+    if (!/highway_path|footway|pedestrian|track/.test(layer.id.toLowerCase())) continue;
+    try { map.setLayoutProperty(layer.id, 'visibility', 'none'); } catch (e) {}
   }
 
   for (const layer of map.getStyle().layers) {
@@ -439,7 +429,7 @@ function emphasisePaths(map) {
   }
 }
 
-function addLayers(map, buildings, boundary) {
+function addLayers(map, buildings, boundary, paths) {
   // The boundary is still needed as geometry — it is what the veil is cut
   // from — but it is no longer drawn. A dashed outline and a veil were saying
   // the same thing twice, and the veil says it without adding a line to read.
@@ -492,6 +482,23 @@ function addLayers(map, buildings, boundary) {
     },
     ...FULL_FIDELITY
   });
+  // Our own paths, drawn over the basemap's.
+  //
+  // Until now every path on screen came from OpenFreeMap's tiles, which they
+  // rebuild on their own schedule — roughly fortnightly. The router, meanwhile,
+  // uses the extract we refresh ourselves. So the map showed one vintage of OSM
+  // while the routing used another, and a footway mapped three days ago was
+  // routed along while being invisible underneath the route line.
+  //
+  // The geometry is already downloaded for routing, so drawing it costs one
+  // source and two layers, and the map now matches what the router believes.
+  map.addSource('paths', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection',
+            features: paths.features.filter(f => f.properties.walkable) },
+    ...FULL_FIDELITY
+  });
+
   map.addSource('route', { type: 'geojson', data: empty(), ...FULL_FIDELITY });
   map.addSource('route-done', { type: 'geojson', data: empty(), ...FULL_FIDELITY });
   map.addSource('leader', { type: 'geojson', data: empty(), ...FULL_FIDELITY });
@@ -536,6 +543,13 @@ function addLayers(map, buildings, boundary) {
 
   map.addLayer({ id: 'leader-line', type: 'line', source: 'leader',
     paint: { 'line-color': '#582C83', 'line-width': 2.5, 'line-dasharray': [1, 1.6], 'line-opacity': .75 } });
+  map.addLayer({ id: 'paths-casing', type: 'line', source: 'paths',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#b3a7bd', 'line-width': PATH_CASING } });
+  map.addLayer({ id: 'paths-line', type: 'line', source: 'paths',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#f6f3f8', 'line-width': PATH_WIDTH } });
+
   // Drawn first so the live route paints over it where they meet.
   map.addLayer({ id: 'route-done-line', type: 'line', source: 'route-done',
     layout: { 'line-cap': 'round', 'line-join': 'round' },

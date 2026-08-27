@@ -16,6 +16,8 @@ ROUNDS="${ROUNDS:-6}"
 PER_TRY_TIMEOUT="${PER_TRY_TIMEOUT:-90}"
 DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
 OUT="$DIR/campus.osm.json"
+# Last good response per part, so one flaky mirror cannot cost a whole refresh.
+CACHE="$DIR/.parts"
 
 # Never accept data older than what we already have.
 #
@@ -88,17 +90,36 @@ fetch_part () {
         rm -f "$tmp"; sleep 2; continue
       fi
       mv "$tmp" "$dest"
+      mkdir -p "$CACHE" && cp "$dest" "$CACHE/$name.json"
       echo "  ✓ $name: $(jq '.elements|length' "$dest") elements  (round $round, ${url#https://}, osm ${base:-?})"
       return 0
     fi
     # Overpass failures are verbose — surface the reason instead of guessing.
-    local why; why="$(grep -o 'Error[^<]*' "$tmp" 2>/dev/null | head -1 | cut -c1-110)"
+    #
+    # The `|| true` is load-bearing. Under `set -e` with pipefail, a grep that
+    # matches nothing fails the pipeline, the assignment inherits that status,
+    # and the script dies mid-retry. A 504 with an empty body did exactly that:
+    # it aborted the whole refresh on round one, which is how the data quietly
+    # stopped updating for two days while every run looked like it had tried.
+    local why; why="$(grep -o 'Error[^<]*' "$tmp" 2>/dev/null | head -1 | cut -c1-110 || true)"
     echo "  · $name: round $round http=$code ${why:-no message} (${url#https://})"
     rm -f "$tmp"
     wait_for_slot "$url"
     sleep $(( round < 4 ? round * 4 : 15 ))
   done
-  echo "  ✗ $name: giving up after $ROUNDS rounds" >&2
+  # Falling back to the last good copy rather than failing the whole refresh.
+  #
+  # The parts are fetched separately, and a single flaky one used to abort
+  # everything: the boundary is the last of four, changes essentially never, and
+  # a 429 on it silently threw away three successful fetches. Worse, `npm run
+  # data` stops at the failed fetch and never rebuilds, so a refresh could
+  # appear to run for days while the data stood still.
+  if [ -f "$CACHE/$name.json" ]; then
+    cp "$CACHE/$name.json" "$dest"
+    echo "  ~ $name: all mirrors failed, reusing the copy from $(date -r "$CACHE/$name.json" '+%Y-%m-%d %H:%M')" >&2
+    return 0
+  fi
+  echo "  ✗ $name: all mirrors failed and there is no previous copy" >&2
   return 1
 }
 
@@ -115,6 +136,8 @@ done
 # have caught entrances silently vanishing when the parts did overlap.
 # The snapshot is only as fresh as its stalest part, so the recorded timestamp
 # is the minimum across them.
+# The snapshot is only as fresh as its stalest part, and a reused part is
+# genuinely older — so the minimum is the honest number to record.
 jq -s '{osm_base: ([.[].osm3s.timestamp_osm_base] | map(select(. != null)) | min),
         elements: (map(.elements) | add
         | group_by((.type // "") + "/" + ((.id // 0)|tostring))
