@@ -8,20 +8,20 @@ name `Furman University`); whole-bbox figures shown for contrast._
 
 | Metric | Value |
 |---|---|
-| walkable ways | 593 |
-| network km | 55.58 |
-| graph nodes | 4595 |
-| graph edges | 5004 |
-| junctions | 756 |
-| dead ends | 161 |
+| walkable ways | 594 |
+| network km | 55.63 |
+| graph nodes | 4603 |
+| graph edges | 5012 |
+| junctions | 757 |
+| dead ends | 162 |
 | components | 5 |
-| largest component nodes | 4498 |
+| largest component nodes | 4506 |
 | largest component pct | 97.9 |
 | orphan islands | 4 |
 | orphan nodes | 97 |
 | near miss gaps | 2 |
 
-_Whole query bbox for contrast: 18 components, 88.8% in the largest, 1005 orphan nodes — the extra islands are off-campus fringe._
+_Whole query bbox for contrast: 19 components, 89.1% in the largest, 1008 orphan nodes — the extra islands are off-campus fringe._
 
 
 ## Completeness (on campus)
